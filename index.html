@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BubbleTasker — Visual Issue Tracker</title>
+    <meta name="description" content="A physics-driven, visual-first issue tracker where every task is a floating, interactive card.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://ui-avatars.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- ═══════ SIDEBAR ═══════ -->
+        <aside id="sidebar">
+            <div class="sidebar-content">
+                <div class="brand">
+                    <div class="logo">
+                        <span class="bubble-icon">🫧</span>
+                        <span class="logo-text">Bubble<span class="logo-accent">Tasker</span></span>
+                    </div>
+                </div>
+                <button id="add-issue-btn" class="primary-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>New Issue</span><kbd class="kbd">N</kbd></button>
+                <div class="filters scrollable-y">
+                    <h3>Filters</h3>
+                    <div class="search-bar">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input type="text" id="search-input" placeholder="Search..." autocomplete="off" spellcheck="false">
+                        <button id="clear-search" class="clear-search-btn" title="Clear">×</button>
+                        <kbd class="kbd kbd-inside" id="search-kbd">/</kbd>
+                    </div>
+                    <div class="filter-grid">
+                        <div class="filter-group"><label>Status</label><select id="filter-status"><option value="all">All</option><option value="open">Open</option><option value="in_progress">Active</option><option value="done">Done</option></select></div>
+                        <div class="filter-group"><label>Priority</label><select id="filter-priority"><option value="all">Any</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+                        <div class="filter-group"><label>Category</label><select id="filter-category"><option value="all">All</option></select></div>
+                        <div class="filter-group"><label>Assignee</label><select id="filter-assignee"><option value="all">Everyone</option></select></div>
+                    </div>
+                    <div class="filter-group group-by-wrapper"><label>Cluster By</label><select id="group-by"><option value="category">Category</option><option value="status">Status</option><option value="priority">Priority</option><option value="assignee">Assignee</option><option value="none">Free Float</option></select></div>
+                    <div class="toggle-row"><span class="toggle-label">Compact</span><label class="switch"><input type="checkbox" id="compact-toggle"><span class="slider"></span></label></div>
+                </div>
+                <div class="quick-filters">
+                    <h3>Quick Filters</h3>
+                    <div class="qf-row">
+                        <button class="qf-btn" data-qf="starred" title="Starred">⭐ Starred</button>
+                        <button class="qf-btn" data-qf="overdue" title="Overdue">🔴 Overdue</button>
+                    </div>
+                    <div class="qf-row">
+                        <button class="qf-btn" data-qf="due-today" title="Due Today">📅 Today</button>
+                        <button class="qf-btn" data-qf="no-assignee" title="Unassigned">👤 Unassigned</button>
+                    </div>
+                    <div class="qf-row">
+                        <button class="qf-btn" data-qf="due-week" title="Due This Week">📆 This Week</button>
+                        <button class="qf-btn" data-qf="high-pri" title="High Priority">🔥 High</button>
+                    </div>
+                </div>
+                <div class="legend"><div class="legend-items"><div class="legend-item"><span class="dot dot-open"></span>Open</div><div class="legend-item"><span class="dot dot-active"></span>Active</div><div class="legend-item"><span class="dot dot-done"></span>Done</div></div></div>
+                <div class="sidebar-footer">
+                    <div class="footer-actions">
+                        <button id="export-json-btn" class="ft-btn" title="Export JSON"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                        <button id="import-json-btn" class="ft-btn" title="Import JSON"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+                        <button id="export-csv-btn" class="ft-btn" title="Export CSV"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
+                        <button id="present-btn" class="ft-btn" title="Present (F)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
+                    </div>
+                    <div class="theme-row">
+                        <span class="toggle-label">Theme</span>
+                        <button id="theme-toggle" class="theme-btn" title="Toggle theme">🌙</button>
+                    </div>
+                    <button id="clear-demo-btn" class="ghost-btn full-width">Clear Demo</button>
+                    <button id="clear-all-btn" class="text-danger-btn">Wipe Canvas</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ═══════ MAIN CANVAS ═══════ -->
+        <main id="main-canvas">
+            <div class="canvas-grid"></div>
+            <div class="view-switcher">
+                <button class="view-btn active" data-view="canvas" title="Canvas View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><circle cx="17" cy="7" r="2"/><circle cx="7" cy="17" r="2"/></svg><span>Canvas</span></button>
+                <button class="view-btn" data-view="list" title="List View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg><span>List</span></button>
+                <button class="view-btn" data-view="kanban" title="Board View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg><span>Board</span></button>
+                <button class="view-btn" data-view="calendar" title="Calendar View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></button>
+                <span id="active-filter-badge" class="filter-badge" style="display:none"></span>
+            </div>
+            <div id="stats-bar" class="stats-bar">
+                <div class="stat" data-status="all"><span class="stat-num" id="stat-total">0</span><span class="stat-label">Total</span></div>
+                <div class="stat-sep"></div>
+                <div class="stat clickable" data-status="open"><span class="dot dot-open"></span><span class="stat-num" id="stat-open">0</span><span class="stat-label">Open</span></div>
+                <div class="stat clickable" data-status="in_progress"><span class="dot dot-active"></span><span class="stat-num" id="stat-progress">0</span><span class="stat-label">Active</span></div>
+                <div class="stat clickable" data-status="done"><span class="dot dot-done"></span><span class="stat-num" id="stat-done">0</span><span class="stat-label">Done</span></div>
+                <div class="stat-sep"></div>
+                <button id="zoom-fit-btn" class="stat-btn" title="Zoom to Fit (Z)">⊞</button>
+                <span id="zoom-level" class="zoom-level">100%</span>
+            </div>
+            <div id="group-labels" class="group-labels"></div>
+            <div id="svg-container"></div>
+
+            <!-- ═══ LIST VIEW ═══ -->
+            <div id="list-view" class="list-view" style="display:none">
+                <table class="list-table"><thead><tr>
+                    <th data-sort="num" class="sortable sorted"># ↕</th>
+                    <th data-sort="title" class="sortable">Title</th>
+                    <th data-sort="status" class="sortable">Status</th>
+                    <th data-sort="priority" class="sortable">Priority</th>
+                    <th data-sort="category" class="sortable">Category</th>
+                    <th data-sort="assignee" class="sortable">Assignee</th>
+                    <th data-sort="dueDate" class="sortable">Due</th>
+                </tr></thead><tbody id="list-body"></tbody></table>
+            </div>
+
+            <!-- ═══ CALENDAR VIEW ═══ -->
+            <div id="calendar-view" class="calendar-view" style="display:none">
+                <div class="cal-toolbar">
+                    <button id="cal-prev" class="cal-nav">‹</button>
+                    <span id="cal-title" class="cal-title">April 2026</span>
+                    <button id="cal-next" class="cal-nav">›</button>
+                    <button id="cal-today" class="cal-today-btn">Today</button>
+                </div>
+                <div class="cal-grid">
+                    <div class="cal-head">Sun</div><div class="cal-head">Mon</div><div class="cal-head">Tue</div>
+                    <div class="cal-head">Wed</div><div class="cal-head">Thu</div><div class="cal-head">Fri</div><div class="cal-head">Sat</div>
+                </div>
+                <div id="cal-body" class="cal-body"></div>
+                <div id="cal-unscheduled" class="cal-unscheduled"></div>
+            </div>
+
+            <!-- ═══ KANBAN VIEW ═══ -->
+            <div id="kanban-view" class="kanban-view" style="display:none">
+                <div class="kanban-col" data-status="open">
+                    <div class="kanban-header"><span class="dot dot-open"></span><span>Open</span><span class="kanban-count" id="kanban-count-open">0</span></div>
+                    <div class="kanban-cards" id="kanban-open"></div>
+                </div>
+                <div class="kanban-col" data-status="in_progress">
+                    <div class="kanban-header"><span class="dot dot-active"></span><span>In Progress</span><span class="kanban-count" id="kanban-count-progress">0</span></div>
+                    <div class="kanban-cards" id="kanban-progress"></div>
+                </div>
+                <div class="kanban-col" data-status="done">
+                    <div class="kanban-header"><span class="dot dot-done"></span><span>Done</span><span class="kanban-count" id="kanban-count-done">0</span></div>
+                    <div class="kanban-cards" id="kanban-done"></div>
+                </div>
+            </div>
+
+            <div id="tooltip" class="tooltip"></div>
+            <div id="empty-state" class="empty-state" style="display:none">
+                <div class="empty-orb"></div>
+                <h2>Your canvas awaits</h2>
+                <p>Double-click anywhere, press <kbd>N</kbd>, or <kbd>Ctrl+K</kbd> to begin.</p>
+            </div>
+            <div id="bulk-bar" class="bulk-bar">
+                <span id="bulk-count" class="bulk-count">0 selected</span>
+                <select id="bulk-status"><option value="">Status…</option><option value="open">Open</option><option value="in_progress">Active</option><option value="done">Done</option></select>
+                <select id="bulk-priority"><option value="">Priority…</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                <button id="bulk-delete-btn" class="bulk-action danger" title="Delete">🗑️</button>
+                <button id="bulk-deselect-btn" class="bulk-action" title="Deselect">✕</button>
+            </div>
+        </main>
+
+        <!-- ═══════ CONTEXT MENU ═══════ -->
+        <div id="context-menu" class="ctx-menu">
+            <div class="ctx-item" data-action="pin"><span class="ctx-icon">📌</span>Pin / Unpin</div>
+            <div class="ctx-item" data-action="clone"><span class="ctx-icon">📋</span>Duplicate</div>
+            <div class="ctx-sep"></div>
+            <div class="ctx-item" data-action="status-open"><span class="ctx-icon"><span class="dot dot-open"></span></span>Set Open<kbd class="kbd">1</kbd></div>
+            <div class="ctx-item" data-action="status-progress"><span class="ctx-icon"><span class="dot dot-active"></span></span>Set Active<kbd class="kbd">2</kbd></div>
+            <div class="ctx-item" data-action="status-done"><span class="ctx-icon"><span class="dot dot-done"></span></span>Set Done<kbd class="kbd">3</kbd></div>
+            <div class="ctx-sep"></div>
+            <div class="ctx-item" data-action="copy"><span class="ctx-icon">📎</span>Copy Title</div>
+            <div class="ctx-item ctx-danger" data-action="delete"><span class="ctx-icon">🗑️</span>Delete</div>
+        </div>
+
+        <!-- ═══════ COMMAND PALETTE ═══════ -->
+        <div id="cmd-palette" class="cmd-palette">
+            <div class="cmd-box">
+                <div class="cmd-input-wrap">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" id="cmd-input" placeholder="Type a command or search issues..." autocomplete="off" spellcheck="false">
+                    <kbd class="kbd">ESC</kbd>
+                </div>
+                <div id="cmd-results" class="cmd-results"></div>
+                <div class="cmd-footer"><span><kbd class="kbd">↑↓</kbd> Navigate</span><span><kbd class="kbd">↵</kbd> Run</span><span><kbd class="kbd">Ctrl+K</kbd> Toggle</span></div>
+            </div>
+        </div>
+
+        <!-- ═══════ SHORTCUTS HELP ═══════ -->
+        <div id="shortcuts-modal" class="modal shortcuts-modal">
+            <div class="modal-content shortcuts-content">
+                <div class="modal-header"><h2>⌨️ Keyboard Shortcuts</h2><button id="close-shortcuts-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <div class="shortcuts-grid">
+                    <div class="sc"><kbd class="kbd">N</kbd><span>New Issue</span></div>
+                    <div class="sc"><kbd class="kbd">/</kbd><span>Focus Search</span></div>
+                    <div class="sc"><kbd class="kbd">Ctrl+K</kbd><span>Command Palette</span></div>
+                    <div class="sc"><kbd class="kbd">F</kbd><span>Present Mode</span></div>
+                    <div class="sc"><kbd class="kbd">0</kbd><span>Reset Zoom</span></div>
+                    <div class="sc"><kbd class="kbd">Ctrl+Z</kbd><span>Undo Delete</span></div>
+                    <div class="sc"><kbd class="kbd">1 2 3</kbd><span>Set Status (hover)</span></div>
+                    <div class="sc"><kbd class="kbd">Shift+🖱</kbd><span>Multi-Select</span></div>
+                    <div class="sc"><kbd class="kbd">Del</kbd><span>Delete Selected</span></div>
+                    <div class="sc"><kbd class="kbd">Esc</kbd><span>Close / Cancel</span></div>
+                    <div class="sc"><kbd class="kbd">Dbl-Click</kbd><span>Spawn Bubble at Cursor</span></div>
+                    <div class="sc"><kbd class="kbd">Right-Click</kbd><span>Context Menu</span></div>
+                    <div class="sc"><kbd class="kbd">?</kbd><span>This Help</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ DATALISTS & HIDDEN ═══════ -->
+        <datalist id="category-datalist"></datalist>
+        <datalist id="assignee-datalist"></datalist>
+        <datalist id="dep-datalist"></datalist>
+        <input type="file" id="import-file" accept=".json" style="display:none">
+
+        <!-- ═══════ ISSUE SIDE PANEL ═══════ -->
+        <div id="issue-panel" class="side-panel">
+            <div class="panel-status-strip" id="panel-status-strip"></div>
+            <div class="panel-header">
+                <div class="header-left"><span id="panel-num" class="panel-num">#1</span><div class="type-badge" id="panel-badge">Task</div><span id="save-indicator" class="save-ind">✓ Saved</span></div>
+                <div class="header-right"><button id="star-btn" class="icon-btn star-btn" title="Star">☆</button><button id="prev-issue-btn" class="icon-btn" title="Previous"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><button id="next-issue-btn" class="icon-btn" title="Next"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button><button id="delete-issue-btn" class="icon-btn danger-icon" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button><button id="close-panel-btn" class="icon-btn" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+            </div>
+            <div class="panel-body scrollable-y">
+                <div class="panel-inner">
+                    <textarea id="panel-title" class="panel-title-input" spellcheck="false" placeholder="Issue title..." rows="1"></textarea>
+                    <div class="panel-meta-grid">
+                        <div class="meta-cell"><span class="meta-lbl">Status</span><select id="edit-status"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="done">Done</option></select></div>
+                        <div class="meta-cell"><span class="meta-lbl">Priority</span><select id="edit-priority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+                        <div class="meta-cell"><span class="meta-lbl">Assignee</span><input type="text" id="edit-assignee" list="assignee-datalist" placeholder="Unassigned" autocomplete="off" spellcheck="false"></div>
+                        <div class="meta-cell"><span class="meta-lbl">Category</span><input type="text" id="edit-category" list="category-datalist" placeholder="Task" autocomplete="off" spellcheck="false"></div>
+                        <div class="meta-cell meta-wide"><span class="meta-lbl">Due Date</span><input type="date" id="edit-due-date"><span id="due-smart" class="due-smart"></span></div>
+                    </div>
+                    <div class="panel-section"><span class="meta-lbl">Description</span><textarea id="panel-desc" class="panel-desc-input" placeholder="Add context, notes, requirements..." spellcheck="false"></textarea></div>
+                    <div class="panel-section">
+                        <div class="section-head"><span class="meta-lbl">Sub-tasks</span><span id="subtask-badge" class="progress-badge"></span></div>
+                        <div id="subtask-list" class="subtask-list"></div>
+                        <input type="text" id="add-subtask-input" class="inline-add" placeholder="+ Add sub-task, Enter to save" autocomplete="off" spellcheck="false">
+                    </div>
+                    <div class="panel-section"><span class="meta-lbl">Tags</span><div class="tags-wrap"><div id="tags-container" class="tags-container"></div><input type="text" id="add-tag-input" placeholder="Tag + Enter" autocomplete="off" spellcheck="false"></div></div>
+                    <div class="panel-section"><span class="meta-lbl">Linked Issues</span><div id="dep-list" class="dep-list"></div><input type="text" id="add-dep-input" class="inline-add" list="dep-datalist" placeholder="+ Link issue..." autocomplete="off" spellcheck="false"></div>
+                    <div class="panel-section">
+                        <div class="section-head"><span class="meta-lbl">Activity</span></div>
+                        <div id="activity-list" class="activity-list"></div>
+                    </div>
+                    <div class="panel-footer-meta"><span id="panel-meta-time"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ ADD MODAL ═══════ -->
+        <div id="add-modal" class="modal">
+            <div class="modal-content add-modal-box">
+                <div class="modal-header"><h2>Quick Add</h2><button id="close-modal-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <form id="add-issue-form">
+                    <input type="text" id="issue-title" class="big-input" placeholder="What needs to be done?" required autofocus autocomplete="off" spellcheck="false">
+                    <p class="form-hint">Hit ↵ to create. Everything below is optional.</p>
+                    <div class="form-row"><div class="input-wrap"><label>Priority</label><select id="issue-priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div><div class="input-wrap"><label>Category</label><input type="text" id="issue-category" list="category-datalist" placeholder="Task" autocomplete="off" spellcheck="false"></div></div>
+                    <div class="form-row"><div class="input-wrap"><label>Assignee</label><input type="text" id="issue-assignee" list="assignee-datalist" placeholder="Unassigned" autocomplete="off" spellcheck="false"></div><div class="input-wrap"><label>Due Date</label><input type="date" id="issue-due-date"></div></div>
+                    <div class="input-wrap"><label>Tags</label><input type="text" id="issue-tags" placeholder="frontend, urgent..." autocomplete="off" spellcheck="false"></div>
+                    <button type="submit" class="primary-btn full-width mt-4">Create Bubble ↵</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ═══════ TOASTS ═══════ -->
+        <div id="toasts" class="toast-stack"></div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
