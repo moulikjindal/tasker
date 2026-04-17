@@ -5,9 +5,10 @@
 // ══════════════════════════════════════════════════════════════
 
 // ═══════ CONSTANTS ═══════
-const MOCK_IDS = new Set(['m1','m2','m3','m4','m5']);
+const MOCK_IDS = new Set(['m1','m2','m3','m4','m5','m6','m7','m8','m9','m10','m11','m12','m13','m14','m15']);
 const COLOR = { open:'#3b82f6', in_progress:'#f59e0b', done:'#10b981' };
-const CARD = { high:{w:178,h:54}, medium:{w:152,h:48}, low:{w:130,h:42} };
+const CARD = { high:{w:152,h:46}, medium:{w:130,h:40}, low:{w:112,h:36} };
+const IDLE_SCALE = 0.84;
 const COMPACT_S = 0.65;
 const STATUS_MAP = { '1':'open', '2':'in_progress', '3':'done' };
 const PRIORITY_ORD = { high:3, medium:2, low:1 };
@@ -16,11 +17,21 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#f43f5e','#f59e0b','#10b981','#06b6d4','#3b82f6'];
 
 const MOCKS = [
-    { id:'m1', num:1, title:'Design System', description:'Build core design tokens:\n• Color palette\n• Typography scale\n• Spacing system\n• Component library', status:'done', priority:'high', category:'Task', tags:['design','ui'], assignee:'Alex', date:new Date(Date.now()-864e5*3).toISOString(), dueDate:null, subtasks:[{text:'Color palette',done:true},{text:'Typography scale',done:true},{text:'Spacing tokens',done:false}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*3).toISOString()},{action:'Status',detail:'open → done',at:new Date(Date.now()-864e5).toISOString()}], statusChangedAt:new Date(Date.now()-864e5).toISOString() },
-    { id:'m2', num:2, title:'Navbar Component', description:'Responsive navbar with mobile hamburger drawer', status:'in_progress', priority:'medium', category:'Feature', tags:['frontend','react'], assignee:'Rahul', date:new Date(Date.now()-864e5*5).toISOString(), dueDate:new Date(Date.now()+864e5*2).toISOString().slice(0,10), subtasks:[{text:'Desktop layout',done:true},{text:'Mobile drawer',done:false}], dependencies:['m1'], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*5).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*2).toISOString() },
-    { id:'m3', num:3, title:'Fix Auth Bypass', description:'Token expiration not validated on page refresh — users can hijack sessions after idle timeout. Fix requires both backend token rotation and frontend cookie handling update.', status:'open', priority:'high', category:'Bug', tags:['backend','security'], assignee:'Sarah', date:new Date(Date.now()-864e5).toISOString(), dueDate:new Date(Date.now()-864e5).toISOString().slice(0,10), subtasks:[], dependencies:[], starred:true, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5).toISOString()}], statusChangedAt:new Date(Date.now()-864e5).toISOString() },
-    { id:'m4', num:4, title:'Postgres Indexing', description:'Add composite indices for dashboard queries to improve load time from 3.2s → 400ms', status:'done', priority:'high', category:'Task', tags:['backend','db'], assignee:'Mike', date:new Date(Date.now()-864e5*7).toISOString(), dueDate:new Date(Date.now()+864e5*5).toISOString().slice(0,10), subtasks:[], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*7).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*3).toISOString() },
-    { id:'m5', num:5, title:'Landing Page v2', description:'New hero section with scroll animations and updated copy', status:'open', priority:'low', category:'Feature', tags:['marketing'], assignee:'Unassigned', date:new Date(Date.now()-864e5*2).toISOString(), dueDate:new Date(Date.now()+864e5*8).toISOString().slice(0,10), subtasks:[], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*2).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*2).toISOString() }
+    { id:'m1', num:1, title:'Design System', description:'Build core design tokens:\n• Color palette\n• Typography scale\n• Spacing system\n• Component library', status:'done', priority:'high', category:'Design', tags:['design','ui','tokens'], assignee:'Alex', date:new Date(Date.now()-864e5*14).toISOString(), dueDate:new Date(Date.now()-864e5*3).toISOString().slice(0,10), subtasks:[{text:'Color palette',done:true},{text:'Typography scale',done:true},{text:'Spacing tokens',done:true}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*14).toISOString()},{action:'Status',detail:'Open → Done',at:new Date(Date.now()-864e5*3).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*3).toISOString() },
+    { id:'m2', num:2, title:'Navbar Component', description:'Responsive navbar with mobile hamburger drawer, sticky scroll behavior, and keyboard navigation support.', status:'in_progress', priority:'medium', category:'Feature', tags:['frontend','react','a11y'], assignee:'Rahul', date:new Date(Date.now()-864e5*10).toISOString(), dueDate:new Date(Date.now()+864e5*2).toISOString().slice(0,10), subtasks:[{text:'Desktop layout',done:true},{text:'Mobile drawer',done:false},{text:'Keyboard nav',done:false}], dependencies:['m1'], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*10).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*4).toISOString() },
+    { id:'m3', num:3, title:'Fix Auth Bypass', description:'Token expiration not validated on page refresh — users can hijack sessions after idle timeout. Fix requires both backend token rotation and frontend cookie handling update.', status:'open', priority:'high', category:'Bug', tags:['backend','security','critical'], assignee:'Sarah', date:new Date(Date.now()-864e5*2).toISOString(), dueDate:new Date(Date.now()-864e5).toISOString().slice(0,10), subtasks:[{text:'Investigate token flow',done:true},{text:'Backend rotation',done:false},{text:'Frontend cookie update',done:false}], dependencies:[], starred:true, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*2).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*2).toISOString() },
+    { id:'m4', num:4, title:'Postgres Indexing', description:'Add composite indices for dashboard queries to improve load time from 3.2s → 400ms. Benchmark before and after.', status:'done', priority:'high', category:'DevOps', tags:['backend','db','performance'], assignee:'Mike', date:new Date(Date.now()-864e5*12).toISOString(), dueDate:new Date(Date.now()-864e5*2).toISOString().slice(0,10), subtasks:[{text:'Identify slow queries',done:true},{text:'Create indices',done:true},{text:'Benchmark',done:true}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*12).toISOString()},{action:'Status',detail:'Open → Done',at:new Date(Date.now()-864e5*2).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*2).toISOString() },
+    { id:'m5', num:5, title:'Landing Page v2', description:'New hero section with scroll animations, updated copy, and customer testimonials carousel.', status:'open', priority:'low', category:'Feature', tags:['marketing','frontend'], assignee:'Unassigned', date:new Date(Date.now()-864e5*5).toISOString(), dueDate:new Date(Date.now()+864e5*12).toISOString().slice(0,10), subtasks:[], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*5).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*5).toISOString() },
+    { id:'m6', num:6, title:'API Rate Limiter', description:'Implement per-user rate limiting on all public endpoints. Use token bucket algorithm with Redis backing store.', status:'in_progress', priority:'high', category:'Feature', tags:['backend','api','security'], assignee:'Sarah', date:new Date(Date.now()-864e5*3).toISOString(), dueDate:new Date(Date.now()+864e5*1).toISOString().slice(0,10), subtasks:[{text:'Redis setup',done:true},{text:'Middleware implementation',done:true},{text:'Per-route config',done:false},{text:'Dashboard metrics',done:false}], dependencies:[], starred:true, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*3).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*1).toISOString() },
+    { id:'m7', num:7, title:'Dark Mode Flicker', description:'Page flashes white for ~200ms on load in dark mode. Need to inline critical theme CSS or use a blocking script.', status:'open', priority:'medium', category:'Bug', tags:['frontend','ui','ux'], assignee:'Alex', date:new Date(Date.now()-864e5*1).toISOString(), dueDate:new Date(Date.now()+864e5*3).toISOString().slice(0,10), subtasks:[], dependencies:['m1'], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*1).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*1).toISOString() },
+    { id:'m8', num:8, title:'User Onboarding Flow', description:'Multi-step wizard: welcome screen → workspace setup → invite team → first project. Track completion rate.', status:'open', priority:'medium', category:'Feature', tags:['frontend','ux','growth'], assignee:'Priya', date:new Date(Date.now()-864e5*4).toISOString(), dueDate:new Date(Date.now()+864e5*7).toISOString().slice(0,10), subtasks:[{text:'Welcome screen',done:false},{text:'Workspace setup',done:false},{text:'Team invite',done:false},{text:'First project wizard',done:false},{text:'Analytics tracking',done:false}], dependencies:['m2'], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*4).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*4).toISOString() },
+    { id:'m9', num:9, title:'CI Pipeline Optimization', description:'Build times are 12min average. Target: under 5min. Investigate caching, parallelism, and selective test runs.', status:'in_progress', priority:'medium', category:'DevOps', tags:['ci','performance','dx'], assignee:'Mike', date:new Date(Date.now()-864e5*6).toISOString(), dueDate:new Date(Date.now()+864e5*4).toISOString().slice(0,10), subtasks:[{text:'Audit current pipeline',done:true},{text:'Add dependency caching',done:true},{text:'Parallelize test suites',done:false},{text:'Selective test runs',done:false}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*6).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*2).toISOString() },
+    { id:'m10', num:10, title:'API Documentation', description:'OpenAPI 3.0 spec for all endpoints. Auto-generate from code annotations. Host on /docs with Swagger UI.', status:'done', priority:'low', category:'Docs', tags:['backend','api','documentation'], assignee:'Jordan', date:new Date(Date.now()-864e5*15).toISOString(), dueDate:new Date(Date.now()-864e5*5).toISOString().slice(0,10), subtasks:[{text:'Annotate endpoints',done:true},{text:'Generate spec',done:true},{text:'Deploy Swagger UI',done:true}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*15).toISOString()},{action:'Status',detail:'Open → Done',at:new Date(Date.now()-864e5*5).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*5).toISOString() },
+    { id:'m11', num:11, title:'Memory Leak in WebSocket', description:'Server memory grows ~50MB/hr under sustained connections. Likely caused by uncleared event listeners on disconnect.', status:'open', priority:'high', category:'Bug', tags:['backend','websocket','critical'], assignee:'Jordan', date:new Date(Date.now()-864e5*1).toISOString(), dueDate:new Date(Date.now()).toISOString().slice(0,10), subtasks:[{text:'Reproduce locally',done:true},{text:'Heap snapshot analysis',done:false},{text:'Fix & verify',done:false}], dependencies:[], starred:true, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*1).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*1).toISOString() },
+    { id:'m12', num:12, title:'Accessibility Audit', description:'WCAG 2.1 AA compliance check across all pages. Focus on color contrast, screen reader support, and keyboard navigation.', status:'open', priority:'medium', category:'Research', tags:['a11y','ux','compliance'], assignee:'Priya', date:new Date(Date.now()-864e5*3).toISOString(), dueDate:new Date(Date.now()+864e5*10).toISOString().slice(0,10), subtasks:[{text:'Automated scan (axe)',done:false},{text:'Manual keyboard test',done:false},{text:'Screen reader test',done:false},{text:'Report & prioritize',done:false}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*3).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*3).toISOString() },
+    { id:'m13', num:13, title:'Email Notification System', description:'Transactional emails for: signup, password reset, task assigned, weekly digest. Use SendGrid + templating engine.', status:'in_progress', priority:'medium', category:'Feature', tags:['backend','email','notifications'], assignee:'Lena', date:new Date(Date.now()-864e5*8).toISOString(), dueDate:new Date(Date.now()+864e5*3).toISOString().slice(0,10), subtasks:[{text:'SendGrid integration',done:true},{text:'Template engine',done:true},{text:'Signup email',done:true},{text:'Password reset',done:false},{text:'Task assigned',done:false},{text:'Weekly digest',done:false}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*8).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*3).toISOString() },
+    { id:'m14', num:14, title:'Mobile Responsive Overhaul', description:'Dashboard, settings, and project views need responsive layouts for tablet and phone breakpoints.', status:'done', priority:'low', category:'Design', tags:['frontend','responsive','mobile'], assignee:'Rahul', date:new Date(Date.now()-864e5*18).toISOString(), dueDate:new Date(Date.now()-864e5*4).toISOString().slice(0,10), subtasks:[{text:'Breakpoint audit',done:true},{text:'Dashboard responsive',done:true},{text:'Settings responsive',done:true},{text:'Project views responsive',done:true}], dependencies:['m1','m2'], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*18).toISOString()},{action:'Status',detail:'Open → Done',at:new Date(Date.now()-864e5*4).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*4).toISOString() },
+    { id:'m15', num:15, title:'Search Infrastructure', description:'Full-text search across projects, tasks, and comments. Evaluate Elasticsearch vs Meilisearch for our scale.', status:'done', priority:'low', category:'Research', tags:['backend','search','infrastructure'], assignee:'Unassigned', date:new Date(Date.now()-864e5*20).toISOString(), dueDate:new Date(Date.now()-864e5*8).toISOString().slice(0,10), subtasks:[{text:'Evaluate Elasticsearch',done:true},{text:'Evaluate Meilisearch',done:true},{text:'Write comparison doc',done:true}], dependencies:[], starred:false, history:[{action:'Created',detail:'',at:new Date(Date.now()-864e5*20).toISOString()},{action:'Status',detail:'Open → Done',at:new Date(Date.now()-864e5*8).toISOString()}], statusChangedAt:new Date(Date.now()-864e5*8).toISOString() }
 ];
 
 // ═══════ DATA LAYER ═══════
@@ -34,13 +45,27 @@ localStorage.setItem('btNextNum', _nextNum);
 
 let deletedStack = [];
 const issueMap = new Map();
-function rebuildMap() { issueMap.clear(); for (const i of issues) issueMap.set(i.id, i); }
+const reverseDeps = new Map();
+function rebuildMap() {
+    issueMap.clear(); reverseDeps.clear();
+    for (const i of issues) {
+        issueMap.set(i.id, i);
+        if (i.dependencies) for (const did of i.dependencies) {
+            if (!reverseDeps.has(did)) reverseDeps.set(did, []);
+            reverseDeps.get(did).push(i.id);
+        }
+    }
+}
 rebuildMap();
 function getI(id) { return issueMap.get(id); }
 
 function cw(p) { return isCompact ? (CARD[p].w * COMPACT_S) | 0 : CARD[p].w; }
 function ch(p) { return isCompact ? (CARD[p].h * COMPACT_S) | 0 : CARD[p].h; }
-function colR(p) { return (cw(p) >> 1) + 8; }
+function colR(p) { return ((cw(p) * IDLE_SCALE) >> 1) + 4; }
+function cardHash(d) {
+    const sc = d.subtasks ? d.subtasks.map(s=>s.done?1:0).join('') : '';
+    return `${d.status}|${d.priority}|${d.title}|${d.category}|${d.assignee}|${d.starred?1:0}|${d.dueDate||''}|${sc}|${d.isPinned?1:0}|${isCompact?1:0}`;
+}
 function avatarColor(name) { let h = 0; for(let i=0;i<name.length;i++) h = name.charCodeAt(i)+((h<<5)-h); return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]; }
 function initials(name) { if(!name||name==='Unassigned') return ''; const p=name.split(' '); return p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():name.slice(0,2).toUpperCase(); }
 
@@ -95,12 +120,12 @@ function applyTheme(theme) {
 const svgBox = $('svg-container'), labelsBox = $('group-labels');
 const panelEl = $('issue-panel'), modalEl = $('add-modal'), formEl = $('add-issue-form');
 const tip = d3.select('#tooltip'), emptyEl = $('empty-state');
-const ctxEl = $('context-menu'), cmdEl = $('cmd-palette');
+const ctxEl = $('context-menu'), cmdEl = $('cmd-palette'), dmEl = $('data-manager');
 
 let W = svgBox.clientWidth, H = svgBox.clientHeight;
 const svg = d3.select('#svg-container').append('svg').attr('width','100%').attr('height','100%');
 const g = svg.append('g');
-const linkLayer = g.append('g'), nodeLayer = g.append('g');
+const labelLayer = g.append('g'), linkLayer = g.append('g'), nodeLayer = g.append('g');
 const zoomB = d3.zoom().scaleExtent([0.12,5]).on('zoom', e => {
     g.attr('transform', e.transform);
     const p = Math.round(e.transform.k * 100);
@@ -110,10 +135,19 @@ svg.call(zoomB).on('dblclick.zoom', null);
 const defs = svg.append('defs');
 
 // ═══════ PERSISTENCE ═══════
-let _saveT = null, _renderRAF = null;
-function saveToDisk() { localStorage.setItem('bubbleTaskerIssues', JSON.stringify(issues)); localStorage.setItem('btNextNum', _nextNum); rebuildMap(); }
+let _saveT = null, _renderRAF = null, _diskTimer = null;
+const MAX_UNDO = 50;
+function scheduleDiskWrite() {
+    clearTimeout(_diskTimer);
+    _diskTimer = setTimeout(() => {
+        localStorage.setItem('bubbleTaskerIssues', JSON.stringify(issues));
+        localStorage.setItem('btNextNum', _nextNum);
+    }, 300);
+}
 function persist(render = true) {
-    saveToDisk(); updateOptions(); updateStats(); flashSave(); updateFilterBadge();
+    invalidateFilterCache();
+    rebuildMap(); scheduleDiskWrite(); updateOptions(); updateStats(); flashSave(); updateFilterBadge();
+    if (deletedStack.length > MAX_UNDO) deletedStack.length = MAX_UNDO;
     if (render) {
         if (currentView === 'canvas') { cancelAnimationFrame(_renderRAF); _renderRAF = requestAnimationFrame(renderGraph); }
         else if (currentView === 'list') renderList();
@@ -204,6 +238,7 @@ function renderActivity() {
 
 // ═══════ QUICK FILTER ═══════
 function applyQuickFilter(qf) {
+    invalidateFilterCache();
     const today = todayStr();
     const now = new Date(); now.setHours(0,0,0,0);
     if (activeQF === qf) { activeQF = null; searchQ = ''; fStatus = 'all'; fPriority = 'all'; fAssignee = 'all'; }
@@ -215,7 +250,10 @@ function applyQuickFilter(qf) {
     dom['search-input'].value = searchQ;
     persist();
 }
+let _filterCache = null;
+function invalidateFilterCache() { _filterCache = null; }
 function filterIssues() {
+    if (_filterCache) return _filterCache;
     const qLow = searchQ ? searchQ.toLowerCase() : '';
     const today = todayStr();
     const now = new Date(); now.setHours(0,0,0,0);
@@ -243,6 +281,7 @@ function filterIssues() {
         if (qLow && !i.title.toLowerCase().includes(qLow) && !i.tags.some(t => t.toLowerCase().includes(qLow)) && !(('#'+i.num).includes(qLow))) continue;
         filtered.push(i);
     }
+    _filterCache = filtered;
     return filtered;
 }
 
@@ -332,7 +371,7 @@ function renderGraph() {
             : 'Double-click anywhere, press N, or Ctrl+K to begin.';
         emptyEl.style.display = 'block';
         nodeLayer.selectAll('*').remove(); linkLayer.selectAll('*').remove();
-        labelsBox.innerHTML = ''; if (sim) sim.stop(); phys.clear(); return;
+        labelLayer.selectAll('*').remove(); if (sim) sim.stop(); phys.clear(); return;
     }
     emptyEl.style.display = 'none';
 
@@ -344,7 +383,7 @@ function renderGraph() {
         return n;
     });
     phys.clear(); for (const n of nodes) phys.set(n.id, n);
-    defs.selectAll('*').remove();
+    defs.selectAll('clipPath').each(function() { if (!fIds.has(this.id.slice(3))) this.remove(); });
 
     const deps = [];
     for (const n of nodes) if (n.dependencies) for (const did of n.dependencies) if (fIds.has(did)) deps.push({source:n.id, target:did});
@@ -364,84 +403,83 @@ function renderGraph() {
         exit => exit.transition().duration(200).style('opacity',0).remove()
     );
 
-    cards.selectAll('*').remove();
     cards.classed('selected', d=>selected.has(d.id));
     cards.classed('done-card', d=>d.status==='done');
 
     cards.each(function(d) {
         const el = d3.select(this);
+        const hash = cardHash(d);
+        if (el.attr('data-hash') === hash) return;
+        el.attr('data-hash', hash);
+        el.selectAll('*').remove();
+        defs.select('#cr-'+d.id).remove();
+        const inner = el.append('g').attr('class','card-scale');
         const w=cw(d.priority), h=ch(d.priority), rx=isCompact?8:11, x0=-w/2, y0=-h/2;
         const now = Date.now();
         el.attr('data-priority', d.priority);
 
-        // Background
-        el.append('rect').attr('class','card-bg').attr('x',x0).attr('y',y0).attr('width',w).attr('height',h).attr('rx',rx)
+        inner.append('rect').attr('class','card-bg').attr('x',x0).attr('y',y0).attr('width',w).attr('height',h).attr('rx',rx)
             .attr('fill','rgba(14,16,22,0.92)').attr('stroke',COLOR[d.status]).attr('stroke-opacity',.16).attr('stroke-width',1);
 
         const clipId = `cr-${d.id}`;
         defs.append('clipPath').attr('id',clipId).append('rect').attr('x',x0).attr('y',y0).attr('width',w).attr('height',h).attr('rx',rx);
 
-        // Accent bar
-        el.append('rect').attr('class','card-accent').attr('x',x0).attr('y',y0).attr('width',3.5).attr('height',h).attr('fill',COLOR[d.status]).attr('clip-path',`url(#${clipId})`);
+        inner.append('rect').attr('class','card-accent').attr('x',x0).attr('y',y0).attr('width',3.5).attr('height',h).attr('fill',COLOR[d.status]).attr('clip-path',`url(#${clipId})`);
 
-        // Pin indicator
-        if (d.isPinned) el.append('rect').attr('x',x0).attr('y',y0).attr('width',w).attr('height',h).attr('rx',rx).attr('fill','none').attr('stroke',COLOR[d.status]).attr('stroke-width',1.5).attr('stroke-dasharray','4,3').attr('stroke-opacity',.3).attr('clip-path',`url(#${clipId})`);
+        if (d.isPinned) inner.append('rect').attr('x',x0).attr('y',y0).attr('width',w).attr('height',h).attr('rx',rx).attr('fill','none').attr('stroke',COLOR[d.status]).attr('stroke-width',1.5).attr('stroke-dasharray','4,3').attr('stroke-opacity',.3).attr('clip-path',`url(#${clipId})`);
 
-        // Issue number
-        if (!isCompact) el.append('text').attr('class','card-num').attr('x',x0+w-10).attr('y',y0+11).attr('text-anchor','end').text(`#${d.num||'?'}`);
+        if (!isCompact) inner.append('text').attr('class','card-num').attr('x',x0+w-10).attr('y',y0+11).attr('text-anchor','end').text(`#${d.num||'?'}`);
 
-        // Star
-        if (d.starred) el.append('text').attr('class','card-star').attr('x',x0+12).attr('y',y0+11).attr('font-size','8px').text('★');
+        if (d.starred) inner.append('text').attr('class','card-star').attr('x',x0+12).attr('y',y0+11).attr('font-size','8px').text('★');
 
-        // Title
         const fs = isCompact?9:(d.priority==='high'?12.5:11.5);
         const maxChars = ((w-24)/(fs*0.56))|0;
         let title = d.title; if(title.length>maxChars) title=title.slice(0,maxChars-1)+'…';
-        el.append('text').attr('class','card-title').attr('x',x0+13).attr('y',isCompact?2:(h>46?-3:-1)).attr('font-size',fs+'px').text(title);
+        inner.append('text').attr('class','card-title').attr('x',x0+13).attr('y',isCompact?2:(h>38?-3:-1)).attr('font-size',fs+'px').text(title);
 
-        // Meta + Assignee avatar
-        if (!isCompact && h > 40) {
+        if (!isCompact && h > 38) {
             const ini = initials(d.assignee);
             if (ini) {
                 const avX = x0 + w - 20, avY = 7;
-                el.append('circle').attr('class','assignee-avatar').attr('cx',avX).attr('cy',avY).attr('r',7).attr('fill',avatarColor(d.assignee)).attr('opacity',.85);
-                el.append('text').attr('class','assignee-avatar').attr('x',avX).attr('y',avY+3).attr('text-anchor','middle').attr('font-size','6.5px').attr('font-weight','700').attr('fill','#fff').text(ini);
+                inner.append('circle').attr('class','assignee-avatar').attr('cx',avX).attr('cy',avY).attr('r',7).attr('fill',avatarColor(d.assignee)).attr('opacity',.85);
+                inner.append('text').attr('class','assignee-avatar').attr('x',avX).attr('y',avY+3).attr('text-anchor','middle').attr('font-size','6.5px').attr('font-weight','700').attr('fill','#fff').text(ini);
             }
             let meta = d.category;
             const metaMax = ((w - (ini?40:24)) / 5.2) | 0;
             if(meta.length>metaMax) meta=meta.slice(0,metaMax-1)+'…';
-            el.append('text').attr('class','card-meta').attr('x',x0+13).attr('y',14).attr('font-size','9px').text(meta);
+            inner.append('text').attr('class','card-meta').attr('x',x0+13).attr('y',14).attr('font-size','9px').text(meta);
         }
 
-        // Subtask progress
         const subs = d.subtasks;
         if (subs?.length) {
             const done=subs.filter(s=>s.done).length, pct=done/subs.length;
-            if (!isCompact) el.append('text').attr('class','card-count').attr('x',x0+w-10).attr('y',-3).attr('fill',pct===1?'#10b981':'rgba(255,255,255,0.3)').attr('font-size','9px').attr('font-weight',600).attr('text-anchor','end').text(pct===1?'✓':`${done}/${subs.length}`);
+            if (!isCompact) inner.append('text').attr('class','card-count').attr('x',x0+w-10).attr('y',-3).attr('fill',pct===1?'#10b981':'rgba(255,255,255,0.3)').attr('font-size','9px').attr('font-weight',600).attr('text-anchor','end').text(pct===1?'✓':`${done}/${subs.length}`);
             const barW=w-10, barY=y0+h-5;
-            el.append('rect').attr('x',x0+5).attr('y',barY).attr('width',barW).attr('height',2).attr('rx',1).attr('fill','rgba(255,255,255,0.03)');
-            if(pct>0) el.append('rect').attr('x',x0+5).attr('y',barY).attr('width',barW*pct).attr('height',2).attr('rx',1).attr('fill','#10b981').attr('opacity',.7);
+            inner.append('rect').attr('x',x0+5).attr('y',barY).attr('width',barW).attr('height',2).attr('rx',1).attr('fill','rgba(255,255,255,0.03)');
+            if(pct>0) inner.append('rect').attr('x',x0+5).attr('y',barY).attr('width',barW*pct).attr('height',2).attr('rx',1).attr('fill','#10b981').attr('opacity',.7);
         }
 
-        // Overdue/stuck dots
-        if (d.dueDate && new Date(d.dueDate)<now && d.status!=='done') el.append('circle').attr('cx',x0+w-8).attr('cy',y0+8).attr('r',3.5).attr('fill','#ef4444').attr('class','pulse-dot');
-        else if(d.status==='in_progress'&&(now-new Date(d.statusChangedAt||d.date).getTime())/36e5>48) el.append('circle').attr('cx',x0+w-8).attr('cy',y0+8).attr('r',3).attr('fill','#f59e0b').attr('class','pulse-dot');
+        if (d.dueDate && new Date(d.dueDate)<now && d.status!=='done') inner.append('circle').attr('cx',x0+w-8).attr('cy',y0+8).attr('r',3.5).attr('fill','#ef4444').attr('class','pulse-dot');
+        else if(d.status==='in_progress'&&(now-new Date(d.statusChangedAt||d.date).getTime())/36e5>48) inner.append('circle').attr('cx',x0+w-8).attr('cy',y0+8).attr('r',3).attr('fill','#f59e0b').attr('class','pulse-dot');
     });
 
     const links = linkLayer.selectAll('.dep-link');
     const centers = getCenters(filtered);
     if (sim) sim.stop();
     sim = d3.forceSimulation(nodes)
-        .force('charge', d3.forceManyBody().strength(d => -colR(d.priority)*1.8))
-        .force('collide', d3.forceCollide().radius(d => colR(d.priority)).iterations(3))
+        .alphaDecay(0.05)
+        .velocityDecay(0.35)
+        .force('charge', d3.forceManyBody().strength(d => -colR(d.priority)*0.9))
+        .force('collide', d3.forceCollide().radius(d => colR(d.priority)).iterations(2))
         .on('tick', () => {
             cards.attr('transform', d => { const hw=cw(d.priority)/2,hh=ch(d.priority)/2; d.x=Math.max(hw,Math.min(W-hw,d.x)); d.y=Math.max(hh,Math.min(H-hh,d.y)); phys.set(d.id,d); return `translate(${d.x},${d.y})`; });
             links.attr('x1',d=>phys.get(d.source)?.x||0).attr('y1',d=>phys.get(d.source)?.y||0).attr('x2',d=>phys.get(d.target)?.x||0).attr('y2',d=>phys.get(d.target)?.y||0);
         });
 
     if (groupBy!=='none'&&Object.keys(centers).length) {
-        sim.force('x',d3.forceX().x(d=>centers[d[groupBy]]?.x||W/2).strength(.18));
-        sim.force('y',d3.forceY().y(d=>centers[d[groupBy]]?.y||H/2).strength(.18));
+        sim.force('x',d3.forceX().x(d=>centers[d[groupBy]]?.x||W/2).strength(.55));
+        sim.force('y',d3.forceY().y(d=>centers[d[groupBy]]?.y||H/2).strength(.55));
+        sim.force('contain', forceContain(centers, groupBy));
     } else sim.force('center',d3.forceCenter(W/2,H/2).strength(.05));
     updateLabels(centers);
 }
@@ -592,7 +630,7 @@ function onCtxCard(e,d) { e.preventDefault();e.stopPropagation();showCtx(e,d.id)
 function tipPos(e) { const r=tip.node().getBoundingClientRect();let tx=e.pageX+16,ty=e.pageY-16;if(tx+260>window.innerWidth)tx=e.pageX-270;if(ty+(r.height||200)>window.innerHeight)ty=window.innerHeight-(r.height||200)-10;if(ty<10)ty=10;return{tx,ty} }
 function onOver(e,d) {
     if(e.buttons>0)return; hovId=d.id;
-    const linked=new Set([d.id]);if(d.dependencies)for(const id of d.dependencies)linked.add(id);for(const i of issues)if(i.dependencies?.includes(d.id))linked.add(i.id);
+    const linked=new Set([d.id]);if(d.dependencies)for(const id of d.dependencies)linked.add(id);const rev=reverseDeps.get(d.id);if(rev)for(const id of rev)linked.add(id);
     nodeLayer.selectAll('.card').style('opacity',b=>linked.has(b.id)?1:.15);
     linkLayer.selectAll('.dep-link').style('opacity',l=>(l.source===d.id||l.target===d.id)?.8:.05);
     const parts=[`<h4>#${d.num} ${d.title}</h4>`];
@@ -610,8 +648,42 @@ function onMove(e){const{tx,ty}=tipPos(e);tip.style('left',tx+'px').style('top',
 function onOut(){hovId=null;tip.style('opacity',0);nodeLayer.selectAll('.card').style('opacity',1);linkLayer.selectAll('.dep-link').style('opacity',1)}
 
 // ═══════ GROUPING ═══════
-function getCenters(data) { if(groupBy==='none')return {};const u=[...new Set(data.map(d=>d[groupBy]).filter(Boolean))],c={};const cols=Math.min(3,u.length),sx=W/(cols||1),sy=H/Math.ceil(u.length/cols||1);u.forEach((g,i)=>{c[g]={x:sx*(i%cols)+sx/2,y:sy*Math.floor(i/cols)+sy/2}});return c }
-function updateLabels(c) { labelsBox.innerHTML='';if(groupBy==='none')return;const frag=document.createDocumentFragment();for(const[n,p]of Object.entries(c)){const l=document.createElement('div');l.className='group-label';l.textContent=n.replace('_',' ');l.style.cssText=`left:${p.x}px;top:${p.y}px`;frag.appendChild(l)}labelsBox.appendChild(frag) }
+function getCenters(data) {
+    if(groupBy==='none')return {};
+    const counts = {};
+    for (const d of data) { const g = d[groupBy]; if (g) counts[g] = (counts[g]||0) + 1; }
+    const u = Object.keys(counts).sort();
+    if (!u.length) return {};
+    const c = {};
+    const cols=Math.min(3,u.length), rows=Math.ceil(u.length/cols);
+    const padX=W*0.10, padY=H*0.10;
+    const sx=(W-padX*2)/(cols||1), sy=(H-padY*2)/(rows||1);
+    const cellR = Math.min(sx, sy) * 0.44;
+    u.forEach((g,i)=>{c[g]={
+        x:padX+sx*(i%cols)+sx/2, y:padY+sy*Math.floor(i/cols)+sy/2,
+        count:counts[g], radius:cellR
+    }});
+    return c;
+}
+function forceContain(centers, field) {
+    let ns;
+    function force(alpha) {
+        for (const n of ns) {
+            const c = centers[n[field]];
+            if (!c) continue;
+            const dx = n.x - c.x, dy = n.y - c.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > c.radius) {
+                const k = ((dist - c.radius) / dist) * alpha * 0.9;
+                n.vx -= dx * k;
+                n.vy -= dy * k;
+            }
+        }
+    }
+    force.initialize = nodes => { ns = nodes; };
+    return force;
+}
+function updateLabels(c) { labelLayer.selectAll('.group-label-svg').remove();if(groupBy==='none')return;for(const[n,p]of Object.entries(c)){labelLayer.append('text').attr('class','group-label-svg').attr('x',p.x).attr('y',p.y).attr('text-anchor','middle').attr('dominant-baseline','middle').text(n.replace('_',' ').toUpperCase())} }
 
 // ═══════ CONTEXT MENU ═══════
 function showCtx(e,id){ctxId=id;ctxEl.style.left=e.pageX+'px';ctxEl.style.top=e.pageY+'px';ctxEl.classList.add('visible')}
@@ -681,6 +753,87 @@ function importJSON(f){const r=new FileReader();r.onload=e=>{try{const d=JSON.pa
 function undoDelete(){if(!deletedStack.length){toast('Nothing to undo','info');return}issues.push(deletedStack.pop());toast('↩ Restored','ok');persist()}
 function togglePresent(){isPresent=!isPresent;document.body.classList.toggle('present-mode',isPresent);W=svgBox.clientWidth;H=svgBox.clientHeight;if(sim)sim.alpha(.3).restart();toast(isPresent?'🎯 Present Mode — F to exit':'Exited','info')}
 
+// ═══════ DATA MANAGER ═══════
+function openDataManager() { renderDataManager(); dmEl.classList.add('active'); }
+function closeDataManager() { dmEl.classList.remove('active'); }
+
+function renderDataManager() {
+    const demoCount = issues.filter(i => MOCK_IDS.has(i.id)).length;
+    const el = $('dm-demo-count');
+    if (el) el.textContent = demoCount;
+    const reloadBtn = $('dm-reload-btn');
+    if (reloadBtn) reloadBtn.textContent = demoCount ? 'Refresh Samples' : 'Load Samples';
+
+    const cats = [...new Set(issues.map(i => i.category))].sort();
+    const asns = [...new Set(issues.map(i => i.assignee))].sort();
+    const catSel = $('dm-del-category');
+    const asnSel = $('dm-del-assignee');
+    if (catSel) catSel.innerHTML = '<option value="">Pick…</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    if (asnSel) asnSel.innerHTML = '<option value="">Pick…</option>' + asns.map(a => `<option value="${a}">${a}</option>`).join('');
+
+    ['status','category','priority','assignee'].forEach(f => {
+        const m = $('dm-match-' + f), b = $('dm-go-' + f), s = $('dm-del-' + f);
+        if (m) { m.textContent = ''; m.className = 'dm-match'; }
+        if (b) b.disabled = true;
+        if (s) s.value = '';
+    });
+}
+
+function dmUpdateMatch(field) {
+    const sel = $('dm-del-' + field), m = $('dm-match-' + field), b = $('dm-go-' + field);
+    if (!sel || !m || !b) return;
+    const val = sel.value;
+    if (!val) { m.textContent = ''; m.className = 'dm-match'; b.disabled = true; return; }
+    const count = issues.filter(i => i[field] === val).length;
+    m.textContent = count + ' issue' + (count !== 1 ? 's' : '');
+    m.className = 'dm-match' + (count > 0 ? ' has-matches' : '');
+    b.disabled = count === 0;
+}
+
+function dmDeleteBy(field) {
+    const sel = $('dm-del-' + field);
+    if (!sel || !sel.value) return;
+    const val = sel.value;
+    const matching = issues.filter(i => i[field] === val);
+    if (!matching.length) return;
+    const label = field === 'status' ? (STATUS_LABEL[val] || val) : val;
+    if (!confirm(`Delete ${matching.length} issue${matching.length !== 1 ? 's' : ''} where ${field} is "${label}"?`)) return;
+    for (const r of matching) deletedStack.push(structuredClone(r));
+    issues = issues.filter(i => i[field] !== val);
+    closePanel(); persist(); renderDataManager();
+    toast(`🗑️ Deleted ${matching.length} issue${matching.length !== 1 ? 's' : ''}`, 'bad', true);
+}
+
+function loadSampleData() {
+    issues = issues.filter(i => !MOCK_IDS.has(i.id));
+    const fresh = structuredClone(MOCKS);
+    for (const m of fresh) { m.subtasks=m.subtasks||[]; m.dependencies=m.dependencies||[]; m.dueDate=m.dueDate||null; m.starred=m.starred||false; m.history=m.history||[]; }
+    issues.push(...fresh);
+    _nextNum = Math.max(_nextNum, ...issues.map(i => (i.num || 0) + 1));
+    closePanel(); persist(); renderDataManager();
+    toast('✨ Loaded 15 sample issues', 'ok');
+}
+
+function dmClearDemo() {
+    const count = issues.filter(i => MOCK_IDS.has(i.id)).length;
+    if (!count) { toast('No sample data to clear', 'info'); return; }
+    if (!confirm(`Remove ${count} sample issue${count !== 1 ? 's' : ''}?`)) return;
+    const removed = issues.filter(i => MOCK_IDS.has(i.id));
+    for (const r of removed) deletedStack.push(structuredClone(r));
+    issues = issues.filter(i => !MOCK_IDS.has(i.id));
+    closePanel(); persist(); renderDataManager();
+    toast(`🧹 Cleared ${count} sample${count !== 1 ? 's' : ''}`, 'info', true);
+}
+
+function dmWipeAll() {
+    if (!issues.length) { toast('Canvas is already empty', 'info'); return; }
+    if (!confirm(`Permanently delete all ${issues.length} issues? This can be undone.`)) return;
+    for (const i of issues) deletedStack.push(structuredClone(i));
+    issues = [];
+    closePanel(); persist(); renderDataManager();
+    toast('💥 Canvas wiped', 'bad', true);
+}
+
 // ═══════ COMMAND PALETTE ═══════
 function openCmd(){cmdOpen=true;cmdEl.classList.add('active');dom['cmd-input'].value='';dom['cmd-input'].focus();populateCmd('')}
 function closeCmd(){cmdOpen=false;cmdEl.classList.remove('active')}
@@ -700,7 +853,9 @@ function populateCmd(q) {
         {icon:'⊞',t:'Zoom to Fit',s:'Show all cards',fn:()=>{closeCmd();zoomToFit()}},
         {icon:'🔄',t:'Reset Zoom',s:'Center canvas',fn:()=>{closeCmd();svg.transition().duration(500).call(zoomB.transform,d3.zoomIdentity)}},
         {icon:'↩',t:'Undo Delete',s:'Restore last',fn:()=>{closeCmd();undoDelete()}},
-        {icon:'🧹',t:'Clear Demo Data',s:'Remove starters',fn:()=>{closeCmd();issues=issues.filter(i=>!MOCK_IDS.has(i.id));persist();toast('Cleared demo','info')}},
+        {icon:'🗃️',t:'Data Manager',s:'Samples & cleanup',fn:()=>{closeCmd();openDataManager()}},
+        {icon:'✨',t:'Load Sample Data',s:'15 demo issues',fn:()=>{closeCmd();loadSampleData()}},
+        {icon:'🧹',t:'Clear Samples',s:'Remove demo issues',fn:()=>{closeCmd();dmClearDemo()}},
     ];
     const mA=actions.filter(a=>!ql||a.t.toLowerCase().includes(ql)||a.s.toLowerCase().includes(ql));
     const mI=issues.filter(i=>!ql||i.title.toLowerCase().includes(ql)||i.tags.some(t=>t.toLowerCase().includes(ql))||i.category.toLowerCase().includes(ql)||('#'+i.num).includes(ql)).slice(0,8).map(i=>({t:`#${i.num} ${i.title}`,s:`${STATUS_LABEL[i.status]} · ${i.priority} · ${i.assignee}`,fn:()=>{closeCmd();openPanel(i.id)},status:i.status}));
@@ -721,13 +876,13 @@ function wire() {
     const filterMap={'filter-status':v=>fStatus=v,'filter-priority':v=>fPriority=v,'filter-category':v=>fCategory=v,'filter-assignee':v=>fAssignee=v,'group-by':v=>groupBy=v};
     const statEls=document.querySelectorAll('.stat.clickable');
     const syncStatH=()=>statEls.forEach(s=>s.classList.toggle('active',s.dataset.status===fStatus));
-    for(const id of Object.keys(filterMap)){dom[id].addEventListener('change',e=>{filterMap[id](e.target.value);activeQF=null;document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));syncStatH();persist()})}
-    statEls.forEach(s=>{s.addEventListener('click',()=>{const v=s.dataset.status;fStatus=fStatus===v?'all':v;dom['filter-status'].value=fStatus;activeQF=null;document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));syncStatH();persist()})});
+    for(const id of Object.keys(filterMap)){dom[id].addEventListener('change',e=>{filterMap[id](e.target.value);invalidateFilterCache();activeQF=null;document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));syncStatH();persist()})}
+    statEls.forEach(s=>{s.addEventListener('click',()=>{const v=s.dataset.status;fStatus=fStatus===v?'all':v;invalidateFilterCache();dom['filter-status'].value=fStatus;activeQF=null;document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));syncStatH();persist()})});
 
     // Search
     let sT=null;
-    dom['search-input'].addEventListener('input',e=>{const v=e.target.value;dom['clear-search'].style.display=v?'block':'none';dom['search-kbd'].style.display=v?'none':'';clearTimeout(sT);sT=setTimeout(()=>{searchQ=v;activeQF=null;document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));persist()},120)});
-    dom['clear-search'].addEventListener('click',()=>{dom['search-input'].value='';searchQ='';dom['clear-search'].style.display='none';dom['search-kbd'].style.display='';persist()});
+    dom['search-input'].addEventListener('input',e=>{const v=e.target.value;dom['clear-search'].style.display=v?'block':'none';dom['search-kbd'].style.display=v?'none':'';clearTimeout(sT);sT=setTimeout(()=>{searchQ=v;invalidateFilterCache();activeQF=null;document.querySelectorAll('.qf-btn').forEach(b=>b.classList.remove('active'));persist()},120)});
+    dom['clear-search'].addEventListener('click',()=>{dom['search-input'].value='';searchQ='';invalidateFilterCache();dom['clear-search'].style.display='none';dom['search-kbd'].style.display='';persist()});
 
     // Quick filter buttons
     document.querySelectorAll('.qf-btn').forEach(b=>{b.addEventListener('click',()=>applyQuickFilter(b.dataset.qf))});
@@ -802,8 +957,7 @@ function wire() {
 
     // Sidebar actions
     dom['compact-toggle'].addEventListener('change',e=>{isCompact=e.target.checked;renderGraph()});
-    $('clear-demo-btn').addEventListener('click',()=>{issues=issues.filter(i=>!MOCK_IDS.has(i.id));toast('Cleared demo','info');persist();closePanel()});
-    $('clear-all-btn').addEventListener('click',()=>{if(confirm('Wipe everything?')){issues=[];closePanel();toast('Canvas wiped','bad');persist()}});
+    $('data-mgr-btn').addEventListener('click',openDataManager);
     $('export-json-btn').addEventListener('click',exportJSON);$('export-csv-btn').addEventListener('click',exportCSV);
     $('import-json-btn').addEventListener('click',()=>dom['import-file'].click());
     dom['import-file'].addEventListener('change',e=>{if(e.target.files[0])importJSON(e.target.files[0]);e.target.value=''});
@@ -823,13 +977,24 @@ function wire() {
     $('close-shortcuts-btn').addEventListener('click',closeShortcuts);
     $('shortcuts-modal').addEventListener('click',e=>{if(e.target.id==='shortcuts-modal')closeShortcuts()});
 
+    // Data manager
+    $('close-dm-btn').addEventListener('click',closeDataManager);
+    dmEl.addEventListener('click',e=>{if(e.target===dmEl)closeDataManager()});
+    $('dm-reload-btn').addEventListener('click',loadSampleData);
+    $('dm-clear-demo-btn').addEventListener('click',dmClearDemo);
+    $('dm-wipe-btn').addEventListener('click',dmWipeAll);
+    ['status','category','priority','assignee'].forEach(f=>{
+        $('dm-del-'+f).addEventListener('change',()=>dmUpdateMatch(f));
+        $('dm-go-'+f).addEventListener('click',()=>dmDeleteBy(f));
+    });
+
     // Keyboard shortcuts
     document.addEventListener('keydown',e=>{
         if(cmdOpen){if(e.key==='Escape'){e.preventDefault();closeCmd()}return}
         const tag=document.activeElement.tagName;
         if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'){if(e.key==='Escape')document.activeElement.blur();return}
         switch(e.key){
-            case'Escape':closePanel();modalEl.classList.remove('active');selected.clear();updateBulk();hideCtx();closeShortcuts();break;
+            case'Escape':closePanel();modalEl.classList.remove('active');closeDataManager();selected.clear();updateBulk();hideCtx();closeShortcuts();break;
             case'n':case'N':e.preventDefault();modalEl.classList.add('active');setTimeout(()=>dom['issue-title'].focus(),100);break;
             case'/':e.preventDefault();dom['search-input'].focus();break;
             case'0':svg.transition().duration(500).call(zoomB.transform,d3.zoomIdentity);break;

@@ -68,8 +68,7 @@
                         <span class="toggle-label">Theme</span>
                         <button id="theme-toggle" class="theme-btn" title="Toggle theme">🌙</button>
                     </div>
-                    <button id="clear-demo-btn" class="ghost-btn full-width">Clear Demo</button>
-                    <button id="clear-all-btn" class="text-danger-btn">Wipe Canvas</button>
+                    <button id="data-mgr-btn" class="ghost-btn full-width">🗃️ Manage Data</button>
                 </div>
             </div>
         </aside>
@@ -257,6 +256,62 @@
                     <div class="input-wrap"><label>Tags</label><input type="text" id="issue-tags" placeholder="frontend, urgent..." autocomplete="off" spellcheck="false"></div>
                     <button type="submit" class="primary-btn full-width mt-4">Create Bubble ↵</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- ═══════ DATA MANAGER MODAL ═══════ -->
+        <div id="data-manager" class="modal">
+            <div class="modal-content dm-box">
+                <div class="modal-header"><h2>🗃️ Data Manager</h2><button id="close-dm-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <div class="dm-body scrollable-y">
+                    <div class="dm-section">
+                        <div class="dm-section-head"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01z"/></svg><h3>Sample Data</h3></div>
+                        <p class="dm-hint">Pre-built issues to explore all features — filters, views, sub-tasks, due dates, and more.</p>
+                        <div class="dm-row">
+                            <div class="dm-info"><span class="dm-count" id="dm-demo-count">0</span> sample issues loaded</div>
+                            <button id="dm-reload-btn" class="dm-btn dm-btn-accent">Load Samples</button>
+                        </div>
+                    </div>
+                    <div class="dm-section">
+                        <div class="dm-section-head"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><h3>Selective Cleanup</h3></div>
+                        <p class="dm-hint">Remove issues matching specific criteria. Deleted issues can be undone.</p>
+                        <div class="dm-filter-row">
+                            <label>Status</label>
+                            <select id="dm-del-status"><option value="">Pick…</option><option value="open">Open</option><option value="in_progress">In Progress</option><option value="done">Done</option></select>
+                            <span class="dm-match" id="dm-match-status"></span>
+                            <button class="dm-del-btn" id="dm-go-status" disabled>Delete</button>
+                        </div>
+                        <div class="dm-filter-row">
+                            <label>Priority</label>
+                            <select id="dm-del-priority"><option value="">Pick…</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+                            <span class="dm-match" id="dm-match-priority"></span>
+                            <button class="dm-del-btn" id="dm-go-priority" disabled>Delete</button>
+                        </div>
+                        <div class="dm-filter-row">
+                            <label>Category</label>
+                            <select id="dm-del-category"><option value="">Pick…</option></select>
+                            <span class="dm-match" id="dm-match-category"></span>
+                            <button class="dm-del-btn" id="dm-go-category" disabled>Delete</button>
+                        </div>
+                        <div class="dm-filter-row">
+                            <label>Assignee</label>
+                            <select id="dm-del-assignee"><option value="">Pick…</option></select>
+                            <span class="dm-match" id="dm-match-assignee"></span>
+                            <button class="dm-del-btn" id="dm-go-assignee" disabled>Delete</button>
+                        </div>
+                    </div>
+                    <div class="dm-section dm-danger-zone">
+                        <div class="dm-section-head"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><h3>Danger Zone</h3></div>
+                        <div class="dm-row">
+                            <div class="dm-info">Remove only the demo/sample issues</div>
+                            <button id="dm-clear-demo-btn" class="dm-btn dm-btn-warn">Clear Samples</button>
+                        </div>
+                        <div class="dm-row">
+                            <div class="dm-info">Permanently delete every issue on the canvas</div>
+                            <button id="dm-wipe-btn" class="dm-btn dm-btn-danger">Wipe Everything</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
