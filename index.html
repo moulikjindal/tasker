@@ -10,6 +10,9 @@
     <link rel="preconnect" href="https://ui-avatars.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#6366f1">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><radialGradient id='g' cx='35%25' cy='30%25' r='75%25'><stop offset='0' stop-color='%23818cf8'/><stop offset='1' stop-color='%236366f1'/></radialGradient></defs><circle cx='32' cy='32' r='26' fill='url(%23g)'/><circle cx='24' cy='24' r='6' fill='white' fill-opacity='0.4'/></svg>">
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
@@ -23,52 +26,67 @@
                         <span class="logo-text">Bubble<span class="logo-accent">Tasker</span></span>
                     </div>
                 </div>
-                <button id="add-issue-btn" class="primary-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>New Issue</span><kbd class="kbd">N</kbd></button>
-                <div class="filters scrollable-y">
-                    <h3>Filters</h3>
-                    <div class="search-bar">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-                        <input type="text" id="search-input" placeholder="Search..." autocomplete="off" spellcheck="false">
-                        <button id="clear-search" class="clear-search-btn" title="Clear">×</button>
-                        <kbd class="kbd kbd-inside" id="search-kbd">/</kbd>
-                    </div>
-                    <div class="filter-grid">
-                        <div class="filter-group"><label>Status</label><select id="filter-status"><option value="all">All</option><option value="open">Open</option><option value="in_progress">Active</option><option value="done">Done</option></select></div>
-                        <div class="filter-group"><label>Priority</label><select id="filter-priority"><option value="all">Any</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
-                        <div class="filter-group"><label>Category</label><select id="filter-category"><option value="all">All</option></select></div>
-                        <div class="filter-group"><label>Assignee</label><select id="filter-assignee"><option value="all">Everyone</option></select></div>
-                    </div>
-                    <div class="filter-group group-by-wrapper"><label>Cluster By</label><select id="group-by"><option value="category">Category</option><option value="status">Status</option><option value="priority">Priority</option><option value="assignee">Assignee</option><option value="none">Free Float</option></select></div>
-                    <div class="toggle-row"><span class="toggle-label">Compact</span><label class="switch"><input type="checkbox" id="compact-toggle"><span class="slider"></span></label></div>
+                <button id="add-issue-btn" class="primary-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>New Task</span><kbd class="kbd">N</kbd></button>
+                <div class="search-bar primary-search">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                    <input type="text" id="search-input" placeholder="Search..." autocomplete="off" spellcheck="false">
+                    <button id="clear-search" class="clear-search-btn" title="Clear">×</button>
+                    <kbd class="kbd kbd-inside" id="search-kbd">/</kbd>
                 </div>
-                <div class="quick-filters">
-                    <h3>Quick Filters</h3>
-                    <div class="qf-row">
-                        <button class="qf-btn" data-qf="starred" title="Starred">⭐ Starred</button>
-                        <button class="qf-btn" data-qf="overdue" title="Overdue">🔴 Overdue</button>
-                    </div>
-                    <div class="qf-row">
-                        <button class="qf-btn" data-qf="due-today" title="Due Today">📅 Today</button>
-                        <button class="qf-btn" data-qf="no-assignee" title="Unassigned">👤 Unassigned</button>
-                    </div>
-                    <div class="qf-row">
-                        <button class="qf-btn" data-qf="due-week" title="Due This Week">📆 This Week</button>
-                        <button class="qf-btn" data-qf="high-pri" title="High Priority">🔥 High</button>
-                    </div>
+                <div class="sidebar-scroll scrollable-y">
+                    <details class="disc">
+                        <summary><span class="disc-label">Filters</span><svg class="disc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+                        <div class="disc-body">
+                            <div class="filter-grid">
+                                <div class="filter-group"><label>Status</label><select id="filter-status"><option value="all">All</option><option value="open">Open</option><option value="in_progress">Active</option><option value="done">Done</option></select></div>
+                                <div class="filter-group"><label>Priority</label><select id="filter-priority"><option value="all">Any</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+                                <div class="filter-group"><label>Category</label><select id="filter-category"><option value="all">All</option></select></div>
+                                <div class="filter-group"><label>Assignee</label><select id="filter-assignee"><option value="all">Everyone</option></select></div>
+                            </div>
+                            <div class="filter-group group-by-wrapper"><label>Cluster By</label><select id="group-by"><option value="category">Category</option><option value="status">Status</option><option value="priority">Priority</option><option value="assignee">Assignee</option><option value="none">Free Float</option></select></div>
+                            <div class="toggle-row"><span class="toggle-label">Compact</span><label class="switch"><input type="checkbox" id="compact-toggle"><span class="slider"></span></label></div>
+                        </div>
+                    </details>
+                    <details class="disc">
+                        <summary><span class="disc-label">Quick Filters</span><svg class="disc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+                        <div class="disc-body">
+                            <div class="qf-row">
+                                <button class="qf-btn" data-qf="starred">⭐ Starred</button>
+                                <button class="qf-btn" data-qf="overdue">🔴 Overdue</button>
+                            </div>
+                            <div class="qf-row">
+                                <button class="qf-btn" data-qf="due-today">📅 Today</button>
+                                <button class="qf-btn" data-qf="no-assignee">👤 Unassigned</button>
+                            </div>
+                            <div class="qf-row">
+                                <button class="qf-btn" data-qf="due-week">📆 This Week</button>
+                                <button class="qf-btn" data-qf="high-pri">🔥 High</button>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="disc">
+                        <summary><span class="disc-label">More Tools</span><svg class="disc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+                        <div class="disc-body">
+                            <div class="tool-grid">
+                                <button id="daily-review-btn" class="tool-btn" title="Daily Review">☀️ <span>Today</span></button>
+                                <button id="stats-btn" class="tool-btn" title="Stats & Heatmap">📈 <span>Stats</span></button>
+                                <button id="templates-btn" class="tool-btn" title="Templates">📦 <span>Templates</span></button>
+                                <button id="settings-btn" class="tool-btn" title="Settings">⚙️ <span>Settings</span></button>
+                                <button id="export-json-btn" class="tool-btn" title="Export JSON">💾 <span>Export JSON</span></button>
+                                <button id="export-csv-btn" class="tool-btn" title="Export CSV">📊 <span>Export CSV</span></button>
+                                <button id="import-json-btn" class="tool-btn" title="Import JSON">📥 <span>Import JSON</span></button>
+                                <button id="present-btn" class="tool-btn" title="Present (F)">🎯 <span>Present</span></button>
+                            </div>
+                            <button id="data-mgr-btn" class="ghost-btn full-width">🗃️ Manage Data</button>
+                        </div>
+                    </details>
                 </div>
-                <div class="legend"><div class="legend-items"><div class="legend-item"><span class="dot dot-open"></span>Open</div><div class="legend-item"><span class="dot dot-active"></span>Active</div><div class="legend-item"><span class="dot dot-done"></span>Done</div></div></div>
                 <div class="sidebar-footer">
-                    <div class="footer-actions">
-                        <button id="export-json-btn" class="ft-btn" title="Export JSON"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
-                        <button id="import-json-btn" class="ft-btn" title="Import JSON"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
-                        <button id="export-csv-btn" class="ft-btn" title="Export CSV"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
-                        <button id="present-btn" class="ft-btn" title="Present (F)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
-                    </div>
+                    <div class="legend"><div class="legend-items"><div class="legend-item"><span class="dot dot-open"></span>Open</div><div class="legend-item"><span class="dot dot-active"></span>Active</div><div class="legend-item"><span class="dot dot-done"></span>Done</div></div></div>
                     <div class="theme-row">
-                        <span class="toggle-label">Theme</span>
+                        <button id="shortcuts-btn" class="theme-btn" title="Shortcuts (?)">⌨</button>
                         <button id="theme-toggle" class="theme-btn" title="Toggle theme">🌙</button>
                     </div>
-                    <button id="data-mgr-btn" class="ghost-btn full-width">🗃️ Manage Data</button>
                 </div>
             </div>
         </aside>
@@ -76,6 +94,15 @@
         <!-- ═══════ MAIN CANVAS ═══════ -->
         <main id="main-canvas">
             <div class="canvas-grid"></div>
+
+            <!-- Quick filter pills — always visible at top-left -->
+            <div class="qf-bar" id="qf-bar">
+                <button class="qf-pill" data-qf="due-today" title="Due today"><span class="qf-emoji">📅</span><span>Today</span><span class="qf-num" id="qf-num-today"></span></button>
+                <button class="qf-pill" data-qf="due-week" title="Due this week"><span class="qf-emoji">📆</span><span>Week</span><span class="qf-num" id="qf-num-week"></span></button>
+                <button class="qf-pill qf-overdue" data-qf="overdue" title="Overdue"><span class="qf-emoji">🔴</span><span>Overdue</span><span class="qf-num" id="qf-num-overdue"></span></button>
+                <button class="qf-pill" data-qf="starred" title="Starred"><span class="qf-emoji">⭐</span><span>Starred</span><span class="qf-num" id="qf-num-starred"></span></button>
+            </div>
+
             <div class="view-switcher">
                 <button class="view-btn active" data-view="canvas" title="Canvas View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/><circle cx="17" cy="7" r="2"/><circle cx="7" cy="17" r="2"/></svg><span>Canvas</span></button>
                 <button class="view-btn" data-view="list" title="List View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg><span>List</span></button>
@@ -83,16 +110,23 @@
                 <button class="view-btn" data-view="calendar" title="Calendar View"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Calendar</span></button>
                 <span id="active-filter-badge" class="filter-badge" style="display:none"></span>
             </div>
+
+            <!-- Compact stats summary at top-right -->
             <div id="stats-bar" class="stats-bar">
-                <div class="stat" data-status="all"><span class="stat-num" id="stat-total">0</span><span class="stat-label">Total</span></div>
+                <div class="stat-summary"><span class="stat-num" id="stat-open">0</span><span class="stat-lbl">open</span></div>
                 <div class="stat-sep"></div>
-                <div class="stat clickable" data-status="open"><span class="dot dot-open"></span><span class="stat-num" id="stat-open">0</span><span class="stat-label">Open</span></div>
-                <div class="stat clickable" data-status="in_progress"><span class="dot dot-active"></span><span class="stat-num" id="stat-progress">0</span><span class="stat-label">Active</span></div>
-                <div class="stat clickable" data-status="done"><span class="dot dot-done"></span><span class="stat-num" id="stat-done">0</span><span class="stat-label">Done</span></div>
+                <div class="stat-summary clickable" data-status="in_progress"><span class="dot dot-active"></span><span class="stat-num" id="stat-progress">0</span><span class="stat-lbl">active</span></div>
+                <div class="stat-summary clickable" data-status="done"><span class="dot dot-done"></span><span class="stat-num" id="stat-done">0</span><span class="stat-lbl">done</span></div>
                 <div class="stat-sep"></div>
                 <button id="zoom-fit-btn" class="stat-btn" title="Zoom to Fit (Z)">⊞</button>
                 <span id="zoom-level" class="zoom-level">100%</span>
+                <span class="stat-num" id="stat-total" style="display:none">0</span>
             </div>
+
+            <!-- Floating Action Button — always-available add -->
+            <button id="fab-add" class="fab" title="Add task (N)" aria-label="Add task">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
             <div id="group-labels" class="group-labels"></div>
             <div id="svg-container"></div>
 
@@ -144,8 +178,20 @@
             <div id="tooltip" class="tooltip"></div>
             <div id="empty-state" class="empty-state" style="display:none">
                 <div class="empty-orb"></div>
-                <h2>Your canvas awaits</h2>
-                <p>Double-click anywhere, press <kbd>N</kbd>, or <kbd>Ctrl+K</kbd> to begin.</p>
+                <h2 id="empty-title">Your canvas awaits</h2>
+                <p id="empty-msg">Capture anything that's on your mind — tasks, ideas, reminders.</p>
+                <div class="empty-actions" id="empty-actions">
+                    <button id="empty-add-btn" class="primary-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add your first task</span></button>
+                    <button id="empty-samples-btn" class="ghost-btn">✨ Try with samples</button>
+                </div>
+                <div class="quick-starts" id="quick-starts">
+                    <span class="qs-label">or start with</span>
+                    <button class="qs-chip" data-cat="Work" data-emoji="💼">💼 Work</button>
+                    <button class="qs-chip" data-cat="Personal" data-emoji="🏡">🏡 Personal</button>
+                    <button class="qs-chip" data-cat="Shopping" data-emoji="🛒">🛒 Shopping</button>
+                    <button class="qs-chip" data-cat="Ideas" data-emoji="💡">💡 Ideas</button>
+                </div>
+                <p class="empty-tip">Try: "<em>buy milk tomorrow !! #shopping</em>" — we'll parse it for you.</p>
             </div>
             <div id="bulk-bar" class="bulk-bar">
                 <span id="bulk-count" class="bulk-count">0 selected</span>
@@ -158,12 +204,17 @@
 
         <!-- ═══════ CONTEXT MENU ═══════ -->
         <div id="context-menu" class="ctx-menu">
+            <div class="ctx-item" data-action="focus"><span class="ctx-icon">🎯</span>Start Focus<kbd class="kbd">P</kbd></div>
             <div class="ctx-item" data-action="pin"><span class="ctx-icon">📌</span>Pin / Unpin</div>
             <div class="ctx-item" data-action="clone"><span class="ctx-icon">📋</span>Duplicate</div>
+            <div class="ctx-item" data-action="save-template"><span class="ctx-icon">💾</span>Save as Template</div>
             <div class="ctx-sep"></div>
             <div class="ctx-item" data-action="status-open"><span class="ctx-icon"><span class="dot dot-open"></span></span>Set Open<kbd class="kbd">1</kbd></div>
             <div class="ctx-item" data-action="status-progress"><span class="ctx-icon"><span class="dot dot-active"></span></span>Set Active<kbd class="kbd">2</kbd></div>
             <div class="ctx-item" data-action="status-done"><span class="ctx-icon"><span class="dot dot-done"></span></span>Set Done<kbd class="kbd">3</kbd></div>
+            <div class="ctx-sep"></div>
+            <div class="ctx-item" data-action="snooze-tomorrow"><span class="ctx-icon">💤</span>Snooze → Tomorrow</div>
+            <div class="ctx-item" data-action="snooze-week"><span class="ctx-icon">💤</span>Snooze → Next Week</div>
             <div class="ctx-sep"></div>
             <div class="ctx-item" data-action="copy"><span class="ctx-icon">📎</span>Copy Title</div>
             <div class="ctx-item ctx-danger" data-action="delete"><span class="ctx-icon">🗑️</span>Delete</div>
@@ -214,31 +265,52 @@
         <div id="issue-panel" class="side-panel">
             <div class="panel-status-strip" id="panel-status-strip"></div>
             <div class="panel-header">
-                <div class="header-left"><span id="panel-num" class="panel-num">#1</span><div class="type-badge" id="panel-badge">Task</div><span id="save-indicator" class="save-ind">✓ Saved</span></div>
+                <div class="header-left"><span id="panel-num" class="panel-num">#1</span><div class="type-badge" id="panel-badge">Task</div><span id="save-indicator" class="save-ind"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Saved</span></div>
                 <div class="header-right"><button id="star-btn" class="icon-btn star-btn" title="Star">☆</button><button id="prev-issue-btn" class="icon-btn" title="Previous"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button><button id="next-issue-btn" class="icon-btn" title="Next"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button><button id="delete-issue-btn" class="icon-btn danger-icon" title="Delete"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button><button id="close-panel-btn" class="icon-btn" title="Close (Esc)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
             </div>
             <div class="panel-body scrollable-y">
                 <div class="panel-inner">
-                    <textarea id="panel-title" class="panel-title-input" spellcheck="false" placeholder="Issue title..." rows="1"></textarea>
-                    <div class="panel-meta-grid">
+                    <textarea id="panel-title" class="panel-title-input" spellcheck="false" placeholder="Title..." rows="1"></textarea>
+                    <div class="panel-meta-grid panel-meta-tight">
                         <div class="meta-cell"><span class="meta-lbl">Status</span><select id="edit-status"><option value="open">Open</option><option value="in_progress">In Progress</option><option value="done">Done</option></select></div>
                         <div class="meta-cell"><span class="meta-lbl">Priority</span><select id="edit-priority"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
-                        <div class="meta-cell"><span class="meta-lbl">Assignee</span><input type="text" id="edit-assignee" list="assignee-datalist" placeholder="Unassigned" autocomplete="off" spellcheck="false"></div>
-                        <div class="meta-cell"><span class="meta-lbl">Category</span><input type="text" id="edit-category" list="category-datalist" placeholder="Task" autocomplete="off" spellcheck="false"></div>
                         <div class="meta-cell meta-wide"><span class="meta-lbl">Due Date</span><input type="date" id="edit-due-date"><span id="due-smart" class="due-smart"></span></div>
                     </div>
-                    <div class="panel-section"><span class="meta-lbl">Description</span><textarea id="panel-desc" class="panel-desc-input" placeholder="Add context, notes, requirements..." spellcheck="false"></textarea></div>
                     <div class="panel-section">
-                        <div class="section-head"><span class="meta-lbl">Sub-tasks</span><span id="subtask-badge" class="progress-badge"></span></div>
-                        <div id="subtask-list" class="subtask-list"></div>
-                        <input type="text" id="add-subtask-input" class="inline-add" placeholder="+ Add sub-task, Enter to save" autocomplete="off" spellcheck="false">
+                        <div class="md-toolbar">
+                            <button type="button" id="md-view-btn" class="md-tab active" data-mode="view">Preview</button>
+                            <button type="button" id="md-edit-btn" class="md-tab" data-mode="edit">Edit</button>
+                            <span class="md-hint">Markdown supported · **bold** *italic* `code` [link](url) - lists</span>
+                        </div>
+                        <div id="panel-desc-view" class="panel-desc-view"></div>
+                        <textarea id="panel-desc" class="panel-desc-input" placeholder="Notes, context, anything…" spellcheck="false" style="display:none"></textarea>
                     </div>
-                    <div class="panel-section"><span class="meta-lbl">Tags</span><div class="tags-wrap"><div id="tags-container" class="tags-container"></div><input type="text" id="add-tag-input" placeholder="Tag + Enter" autocomplete="off" spellcheck="false"></div></div>
-                    <div class="panel-section"><span class="meta-lbl">Linked Issues</span><div id="dep-list" class="dep-list"></div><input type="text" id="add-dep-input" class="inline-add" list="dep-datalist" placeholder="+ Link issue..." autocomplete="off" spellcheck="false"></div>
-                    <div class="panel-section">
-                        <div class="section-head"><span class="meta-lbl">Activity</span></div>
-                        <div id="activity-list" class="activity-list"></div>
-                    </div>
+                    <details class="disc disc-panel">
+                        <summary><span class="disc-label">Subtasks</span><span id="subtask-badge" class="progress-badge"></span><svg class="disc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+                        <div class="disc-body">
+                            <div id="subtask-list" class="subtask-list"></div>
+                            <input type="text" id="add-subtask-input" class="inline-add" placeholder="+ Add subtask, ↵ to save" autocomplete="off" spellcheck="false">
+                        </div>
+                    </details>
+                    <details class="disc disc-panel">
+                        <summary><span class="disc-label">Details</span><svg class="disc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+                        <div class="disc-body">
+                            <div class="panel-meta-grid">
+                                <div class="meta-cell"><span class="meta-lbl">Category</span><input type="text" id="edit-category" list="category-datalist" placeholder="Task" autocomplete="off" spellcheck="false"></div>
+                                <div class="meta-cell"><span class="meta-lbl">Assignee</span><input type="text" id="edit-assignee" list="assignee-datalist" placeholder="Unassigned" autocomplete="off" spellcheck="false"></div>
+                                <div class="meta-cell meta-wide"><span class="meta-lbl">Repeats</span><select id="edit-recurrence"><option value="">Never</option><option value="daily">Every day</option><option value="weekdays">Weekdays only</option><option value="weekly">Every week</option><option value="biweekly">Every 2 weeks</option><option value="monthly">Every month</option></select></div>
+                                <div class="meta-cell meta-wide"><span class="meta-lbl">Time spent</span><div class="time-track"><span id="time-total" class="time-total">0m</span><button type="button" id="time-focus-btn" class="ghost-btn">🎯 Start Focus</button></div></div>
+                            </div>
+                            <div class="panel-section"><span class="meta-lbl">Tags</span><div class="tags-wrap"><div id="tags-container" class="tags-container"></div><input type="text" id="add-tag-input" placeholder="Tag + ↵" autocomplete="off" spellcheck="false"></div></div>
+                            <div class="panel-section"><span class="meta-lbl">Linked Issues</span><div id="dep-list" class="dep-list"></div><input type="text" id="add-dep-input" class="inline-add" list="dep-datalist" placeholder="+ Link issue..." autocomplete="off" spellcheck="false"></div>
+                        </div>
+                    </details>
+                    <details class="disc disc-panel">
+                        <summary><span class="disc-label">Activity</span><svg class="disc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+                        <div class="disc-body">
+                            <div id="activity-list" class="activity-list"></div>
+                        </div>
+                    </details>
                     <div class="panel-footer-meta"><span id="panel-meta-time"></span></div>
                 </div>
             </div>
@@ -249,12 +321,24 @@
             <div class="modal-content add-modal-box">
                 <div class="modal-header"><h2>Quick Add</h2><button id="close-modal-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
                 <form id="add-issue-form">
-                    <input type="text" id="issue-title" class="big-input" placeholder="What needs to be done?" required autofocus autocomplete="off" spellcheck="false">
-                    <p class="form-hint">Hit ↵ to create. Everything below is optional.</p>
-                    <div class="form-row"><div class="input-wrap"><label>Priority</label><select id="issue-priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div><div class="input-wrap"><label>Category</label><input type="text" id="issue-category" list="category-datalist" placeholder="Task" autocomplete="off" spellcheck="false"></div></div>
-                    <div class="form-row"><div class="input-wrap"><label>Assignee</label><input type="text" id="issue-assignee" list="assignee-datalist" placeholder="Unassigned" autocomplete="off" spellcheck="false"></div><div class="input-wrap"><label>Due Date</label><input type="date" id="issue-due-date"></div></div>
-                    <div class="input-wrap"><label>Tags</label><input type="text" id="issue-tags" placeholder="frontend, urgent..." autocomplete="off" spellcheck="false"></div>
-                    <button type="submit" class="primary-btn full-width mt-4">Create Bubble ↵</button>
+                    <div class="big-input-wrap">
+                        <input type="text" id="issue-title" class="big-input" placeholder='e.g. "Buy milk tomorrow !! #shopping"' required autofocus autocomplete="off" spellcheck="false">
+                        <button type="button" id="voice-btn" class="voice-btn" title="Voice input">🎙</button>
+                    </div>
+                    <div class="smart-hints">
+                        <span class="sh"><b>tomorrow</b> · <b>monday</b> · <b>in 3d</b> → due date</span>
+                        <span class="sh"><b>!</b> low · <b>!!</b> medium · <b>!!!</b> high</span>
+                        <span class="sh"><b>#category</b> · <b>*</b> for ⭐</span>
+                    </div>
+                    <details class="disc disc-modal">
+                        <summary><span class="disc-label">More options</span><svg class="disc-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+                        <div class="disc-body">
+                            <div class="form-row"><div class="input-wrap"><label>Priority</label><select id="issue-priority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div><div class="input-wrap"><label>Due Date</label><input type="date" id="issue-due-date"></div></div>
+                            <div class="form-row"><div class="input-wrap"><label>Category</label><input type="text" id="issue-category" list="category-datalist" placeholder="Task" autocomplete="off" spellcheck="false"></div><div class="input-wrap"><label>Assignee</label><input type="text" id="issue-assignee" list="assignee-datalist" placeholder="Unassigned" autocomplete="off" spellcheck="false"></div></div>
+                            <div class="input-wrap"><label>Tags</label><input type="text" id="issue-tags" placeholder="frontend, urgent..." autocomplete="off" spellcheck="false"></div>
+                        </div>
+                    </details>
+                    <button type="submit" class="primary-btn full-width mt-4">Create ↵</button>
                 </form>
             </div>
         </div>
@@ -313,6 +397,80 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- ═══════ DAILY REVIEW MODAL ═══════ -->
+        <div id="daily-review" class="modal">
+            <div class="modal-content dr-box">
+                <div class="modal-header"><h2>☀️ Daily Review</h2><button id="close-dr-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <div class="dr-body scrollable-y"></div>
+            </div>
+        </div>
+
+        <!-- ═══════ SETTINGS MODAL ═══════ -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content settings-box">
+                <div class="modal-header"><h2>⚙️ Settings</h2><button id="close-settings-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <div class="settings-body scrollable-y">
+                    <div class="settings-section">
+                        <h3>Appearance</h3>
+                        <div class="setting-row"><label>Accent Color</label>
+                            <div class="accent-swatches">
+                                <button class="swatch" data-color="#6366f1" style="background:#6366f1" title="Indigo"></button>
+                                <button class="swatch" data-color="#8b5cf6" style="background:#8b5cf6" title="Violet"></button>
+                                <button class="swatch" data-color="#ec4899" style="background:#ec4899" title="Pink"></button>
+                                <button class="swatch" data-color="#ef4444" style="background:#ef4444" title="Red"></button>
+                                <button class="swatch" data-color="#f59e0b" style="background:#f59e0b" title="Amber"></button>
+                                <button class="swatch" data-color="#10b981" style="background:#10b981" title="Emerald"></button>
+                                <button class="swatch" data-color="#06b6d4" style="background:#06b6d4" title="Cyan"></button>
+                                <button class="swatch" data-color="#3b82f6" style="background:#3b82f6" title="Blue"></button>
+                                <input type="color" id="accent-custom" class="swatch swatch-custom" title="Custom">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Notifications & Sound</h3>
+                        <div class="setting-row"><div><label>Browser notifications</label><p class="setting-hint">Get reminded when tasks are due.</p></div><label class="switch"><input type="checkbox" id="set-notif"><span class="slider"></span></label></div>
+                        <div class="setting-row"><div><label>Sound effects</label><p class="setting-hint">Subtle ding when a task is completed.</p></div><label class="switch"><input type="checkbox" id="set-sound"><span class="slider"></span></label></div>
+                        <div class="setting-row"><div><label>Confetti on completion</label><p class="setting-hint">Brief celebration burst.</p></div><label class="switch"><input type="checkbox" id="set-confetti"><span class="slider"></span></label></div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Daily Review</h3>
+                        <div class="setting-row">
+                            <div><label>Open review now</label><p class="setting-hint">Yesterday's wins, today's plan, your streak.</p></div>
+                            <button id="open-review-btn" class="ghost-btn">☀️ Open</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ STATS / HEATMAP MODAL ═══════ -->
+        <div id="stats-modal" class="modal">
+            <div class="modal-content stats-box">
+                <div class="modal-header"><h2>📈 Activity</h2><button id="close-stats-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <div class="stats-body scrollable-y">
+                    <div id="stats-summary" class="stats-summary"></div>
+                    <div id="heatmap-wrap" class="heatmap-wrap"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ TEMPLATES MODAL ═══════ -->
+        <div id="templates-modal" class="modal">
+            <div class="modal-content templates-box">
+                <div class="modal-header"><h2>📦 Templates</h2><button id="close-templates-btn" class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+                <div class="templates-body scrollable-y">
+                    <p class="dm-hint">Reusable task presets. Right-click any task → "Save as Template" to add one.</p>
+                    <div id="templates-list" class="templates-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════ FIRST-RUN HINT ═══════ -->
+        <div id="hint-banner" class="hint-banner" style="display:none">
+            <span class="hint-text">Tip: press <kbd class="kbd">N</kbd> to add · <kbd class="kbd">/</kbd> to search · <kbd class="kbd">Ctrl+K</kbd> for everything · <kbd class="kbd">?</kbd> for shortcuts</span>
+            <button id="hint-dismiss" class="hint-x" aria-label="Dismiss">✕</button>
         </div>
 
         <!-- ═══════ TOASTS ═══════ -->
