@@ -39,7 +39,7 @@ const raw = localStorage.getItem('bubbleTaskerIssues');
 let issues = raw ? JSON.parse(raw) : structuredClone(MOCKS);
 issues = issues.map(i => ({
     subtasks:[], dependencies:[], dueDate:null, statusChangedAt:i.date, starred:false, history:[],
-    recurrence:null, timeEntries:[], snoozedUntil:null,
+    recurrence:null, timeEntries:[], snoozedUntil:null, whiteboardPos:null,
     ...i
 }));
 
@@ -107,6 +107,7 @@ function cacheDom() {
      'kanban-open','kanban-progress','kanban-done',
      'kanban-count-open','kanban-count-progress','kanban-count-done',
      'activity-list','calendar-view','cal-body','cal-title','cal-unscheduled',
+     'whiteboard-view','whiteboard-canvas',
      'active-filter-badge','theme-toggle',
      'edit-recurrence','time-total','time-focus-btn',
      'panel-desc-view','md-view-btn','md-edit-btn'
@@ -119,7 +120,7 @@ let searchQ='', groupBy='category', activeQF=null;
 let sim=null, selId=null, hovId=null, ctxId=null;
 let isCompact=false, isPresent=false;
 let cmdOpen=false, cmdIdx=0, cmdList=[];
-let currentView='canvas';
+let currentView = localStorage.getItem('btCurrentView') || 'canvas';
 let listSort={ col:'num', dir:1 };
 let calYear, calMonth;
 const phys = new Map(), selected = new Set();
@@ -141,6 +142,7 @@ const svgBox = $('svg-container'), labelsBox = $('group-labels');
 const panelEl = $('issue-panel'), modalEl = $('add-modal'), formEl = $('add-issue-form');
 const tip = d3.select('#tooltip'), emptyEl = $('empty-state');
 const ctxEl = $('context-menu'), cmdEl = $('cmd-palette'), dmEl = $('data-manager');
+const wbEmptyCtxEl = $('wb-empty-ctx');
 
 let W = svgBox.clientWidth, H = svgBox.clientHeight;
 const svg = d3.select('#svg-container').append('svg').attr('width','100%').attr('height','100%');
@@ -149,7 +151,7 @@ const labelLayer = g.append('g'), linkLayer = g.append('g'), nodeLayer = g.appen
 const zoomB = d3.zoom().scaleExtent([0.12,5]).on('zoom', e => {
     g.attr('transform', e.transform);
     const p = Math.round(e.transform.k * 100);
-    if (dom['zoom-level']) dom['zoom-level'].textContent = p + '%';
+    if (dom['zoom-level'] && currentView === 'canvas') dom['zoom-level'].textContent = p + '%';
 });
 svg.call(zoomB).on('dblclick.zoom', null);
 const defs = svg.append('defs');
@@ -173,6 +175,7 @@ function persist(render = true) {
         else if (currentView === 'list') renderList();
         else if (currentView === 'kanban') renderKanban();
         else if (currentView === 'calendar') renderCalendar();
+        else if (currentView === 'whiteboard') renderWhiteboard();
     }
 }
 function flashSave() {
@@ -403,7 +406,8 @@ function filterIssues() {
             }
         }
         // Standard filters
-        if (fStatus !== 'all' && i.status !== fStatus) continue;
+        if (fStatus === 'active' && i.status === 'done') continue;
+        if (fStatus !== 'all' && fStatus !== 'active' && i.status !== fStatus) continue;
         if (fPriority !== 'all' && i.priority !== fPriority) continue;
         if (fCategory !== 'all' && i.category !== fCategory) continue;
         if (fAssignee !== 'all' && i.assignee !== fAssignee) continue;
@@ -417,16 +421,19 @@ function filterIssues() {
 // ═══════ VIEW SYSTEM ═══════
 function setView(view) {
     currentView = view;
+    localStorage.setItem('btCurrentView', view);
     svgBox.style.display = view === 'canvas' ? '' : 'none';
     labelsBox.style.display = view === 'canvas' ? '' : 'none';
     dom['list-view'].style.display = view === 'list' ? '' : 'none';
     dom['kanban-view'].style.display = view === 'kanban' ? '' : 'none';
     dom['calendar-view'].style.display = view === 'calendar' ? '' : 'none';
+    dom['whiteboard-view'].style.display = view === 'whiteboard' ? '' : 'none';
     document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
     if (view === 'canvas') renderGraph();
     else if (view === 'list') renderList();
     else if (view === 'kanban') renderKanban();
     else if (view === 'calendar') renderCalendar();
+    else if (view === 'whiteboard') renderWhiteboard();
 }
 
 // ═══════ CANVAS INTERACTIONS ═══════
@@ -448,7 +455,7 @@ window.addEventListener('resize', () => { if (_resizeRAF) return; _resizeRAF = r
 // ═══════ INIT ═══════
 function init() {
     cacheDom(); applyTheme(currentTheme); applyAccent(settings.accent);
-    wire(); updateOptions(); updateStats(); updateFilterBadge(); renderGraph();
+    wire(); updateOptions(); updateStats(); updateFilterBadge(); setView(currentView);
     // Service worker for offline + installable
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -539,8 +546,10 @@ function refillSel(id, list, cur) {
 function updateStats() {
     let o = 0, p = 0, d = 0;
     for (const i of issues) { if (i.status === 'open') o++; else if (i.status === 'in_progress') p++; else d++; }
-    animNum(dom['stat-total'], issues.length); animNum(dom['stat-open'], o + p);
-    animNum(dom['stat-progress'], p); animNum(dom['stat-done'], d);
+    animNum(dom['stat-total'], issues.length);
+    dom['stat-open'].textContent = o;
+    dom['stat-progress'].textContent = o + p;
+    dom['stat-done'].textContent = d;
     updateQfCounts();
 }
 function updateQfCounts() {
@@ -573,12 +582,32 @@ function animNum(el, target) {
 
 // ═══════ ZOOM TO FIT ═══════
 function zoomToFit() {
-    if (!phys.size) return;
+    if (currentView === 'whiteboard' && window._wbZoom) {
+        const filtered = filterIssues();
+        if (!filtered.length) return;
+        let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
+        for (const i of filtered) {
+            const p = i.whiteboardPos; if(!p) continue;
+            if(p.x<x0) x0=p.x; if(p.y<y0) y0=p.y;
+            if(p.x+240>x1) x1=p.x+240; if(p.y+120>y1) y1=p.y+120;
+        }
+        if(x0===Infinity) return;
+        const pad=100; x0-=pad;y0-=pad;x1+=pad;y1+=pad;
+        const dx=x1-x0,dy=y1-y0, scale=Math.min(W/dx,H/dy,2), tx=W/2-(x0+x1)/2*scale, ty=H/2-(y0+y1)/2*scale;
+        d3.select(dom['whiteboard-view']).transition().duration(600).call(window._wbZoom.transform, d3.zoomIdentity.translate(tx,ty).scale(scale));
+        return;
+    }
+    if (!phys.size || currentView !== 'canvas') return;
     let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
     for (const [,n] of phys) { const hw=cw(n.priority||'medium')/2,hh=ch(n.priority||'medium')/2; if(n.x-hw<x0)x0=n.x-hw; if(n.y-hh<y0)y0=n.y-hh; if(n.x+hw>x1)x1=n.x+hw; if(n.y+hh>y1)y1=n.y+hh; }
     const pad=80; x0-=pad;y0-=pad;x1+=pad;y1+=pad;
     const dx=x1-x0,dy=y1-y0, scale=Math.min(W/dx,H/dy,2), tx=W/2-(x0+x1)/2*scale, ty=H/2-(y0+y1)/2*scale;
     svg.transition().duration(600).call(zoomB.transform, d3.zoomIdentity.translate(tx,ty).scale(scale));
+}
+
+function zoomBy(factor) {
+    if (currentView === 'canvas' && window._zoom) window._zoom.scaleBy(svg.transition().duration(250), factor);
+    else if (currentView === 'whiteboard' && window._wbZoom) window._wbZoom.scaleBy(d3.select(dom['whiteboard-view']).transition().duration(250), factor);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -735,17 +764,17 @@ function renderList() {
         const statusDot = i.status==='open'?'dot-open':i.status==='in_progress'?'dot-active':'dot-done';
         const ini = initials(i.assignee);
         const subInfo = i.subtasks.length ? `<span class="list-subtasks">${i.subtasks.filter(s=>s.done).length}/${i.subtasks.length}</span>` : '';
-        const tagPills = i.tags.length ? `<div class="list-tags">${i.tags.map(t=>`<span class="list-tag">${t}</span>`).join('')}</div>` : '';
+        const tagPills = i.tags.length ? `<div class="list-tags">${i.tags.map(t=>`<span class="list-tag">${escapeHtml(t)}</span>`).join('')}</div>` : '';
         return `<tr class="list-row${selId===i.id?' list-selected':''}" data-id="${i.id}" style="${i.status==='done'?'opacity:.55':''}">
             <td class="list-num">#${i.num}</td>
             <td class="list-title-cell">
-                <span class="dot ${statusDot}" style="width:7px;height:7px;display:inline-block;margin-right:6px;flex-shrink:0"></span>${i.starred?'<span class="list-star">★</span>':''}${i.title}
+                <span class="dot ${statusDot}" style="width:7px;height:7px;display:inline-block;margin-right:6px;flex-shrink:0"></span>${i.starred?'<span class="list-star">★</span>':''}${escapeHtml(i.title)}
                 ${subInfo}${tagPills}
             </td>
             <td><span class="list-status" style="color:${COLOR[i.status]}">${STATUS_LABEL[i.status]}</span></td>
             <td class="list-priority-${i.priority}">${i.priority}</td>
-            <td>${i.category}</td>
-            <td>${ini?`<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:16px;height:16px;border-radius:50%;background:${avatarColor(i.assignee)};display:inline-grid;place-items:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0">${ini}</span>${i.assignee}</span>`:`<span style="color:var(--text-3)">—</span>`}</td>
+            <td>${escapeHtml(i.category)}</td>
+            <td>${ini?`<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:16px;height:16px;border-radius:50%;background:${avatarColor(i.assignee)};display:inline-grid;place-items:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0">${escapeHtml(ini)}</span>${escapeHtml(i.assignee)}</span>`:`<span style="color:var(--text-3)">—</span>`}</td>
             <td class="list-due ${sd.cls}">${sd.text||(i.dueDate||'—')}</td>
         </tr>`;
     }).join('');
@@ -771,10 +800,10 @@ function renderKanban() {
             const ini = initials(i.assignee);
             return `<div class="kanban-card" draggable="true" data-id="${i.id}" style="${i.status==='done'?'opacity:.6':''}">
                 <div class="kanban-card-head"><span class="kanban-card-num">#${i.num}</span><span class="kanban-card-priority p-${i.priority}">${i.priority}</span></div>
-                <div class="kanban-card-title">${i.starred?'★ ':''}${i.title}</div>
-                <div class="kanban-card-meta"><span>${i.category}</span>${ini?`<span style="display:inline-flex;align-items:center;gap:3px"><span style="width:14px;height:14px;border-radius:50%;background:${avatarColor(i.assignee)};display:inline-grid;place-items:center;font-size:6px;font-weight:700;color:#fff">${ini}</span>${i.assignee}</span>`:''}</div>
+                <div class="kanban-card-title">${i.starred?'★ ':''}${escapeHtml(i.title)}</div>
+                <div class="kanban-card-meta"><span>${escapeHtml(i.category)}</span>${ini?`<span style="display:inline-flex;align-items:center;gap:3px"><span style="width:14px;height:14px;border-radius:50%;background:${avatarColor(i.assignee)};display:inline-grid;place-items:center;font-size:6px;font-weight:700;color:#fff">${escapeHtml(ini)}</span>${escapeHtml(i.assignee)}</span>`:''}</div>
                 ${sd.text?`<div class="kanban-card-due ${sd.cls}">${sd.text}</div>`:''}
-                ${i.tags.length?`<div class="kanban-card-tags">${i.tags.map(t=>`<span class="kanban-card-tag">${t}</span>`).join('')}</div>`:''}
+                ${i.tags.length?`<div class="kanban-card-tags">${i.tags.map(t=>`<span class="kanban-card-tag">${escapeHtml(t)}</span>`).join('')}</div>`:''}
                 ${subs?.length?`<div class="kanban-card-progress"><div class="kanban-card-progress-fill" style="width:${subPct*100}%"></div></div>`:''}
             </div>`;
         }).join('');
@@ -831,7 +860,7 @@ function renderCalendar() {
         const chips = (dateMap[dateKey] || []).map(i => {
             const sCls = i.status === 'open' ? 's-open' : i.status === 'in_progress' ? 's-progress' : 's-done';
             const isOverdue = i.dueDate && new Date(i.dueDate+'T00:00:00') < new Date() && i.status !== 'done';
-            return `<div class="cal-chip ${sCls}${isOverdue?' overdue':''}" data-id="${i.id}" title="#${i.num} ${i.title}">${i.starred?'★ ':''}#${i.num} ${i.title}</div>`;
+            return `<div class="cal-chip ${sCls}${isOverdue?' overdue':''}" data-id="${i.id}" title="#${i.num} ${escapeHtml(i.title)}">${i.starred?'★ ':''}#${i.num} ${escapeHtml(i.title)}</div>`;
         }).join('');
 
         const displayNum = isOther ? dateObj.getDate() : dayNum;
@@ -841,12 +870,554 @@ function renderCalendar() {
 
     // Unscheduled section
     if (unscheduled.length) {
-        unsched.innerHTML = `<div class="cal-unsched-title">No due date (${unscheduled.length})</div><div class="cal-unsched-list">${unscheduled.map(i => `<div class="cal-unsched-chip" data-id="${i.id}">#${i.num} ${i.title}</div>`).join('')}</div>`;
+        unsched.innerHTML = `<div class="cal-unsched-title">No due date (${unscheduled.length})</div><div class="cal-unsched-list">${unscheduled.map(i => `<div class="cal-unsched-chip" data-id="${i.id}">#${i.num} ${escapeHtml(i.title)}</div>`).join('')}</div>`;
         unsched.style.display = '';
     } else {
         unsched.style.display = 'none';
     }
 }
+
+function wbForceRect() {
+    let nodes;
+    function force(alpha) {
+        const padding = 12; // Reduced padding
+        for (let i = 0, n = nodes.length; i < n; ++i) {
+            const a = nodes[i];
+            if (!a.whiteboardPos) continue;
+            const wA = a._w || 240;
+            const hA = a._h || 120;
+            
+            for (let j = i + 1; j < n; ++j) {
+                const b = nodes[j];
+                if (!b.whiteboardPos) continue;
+                
+                const wB = b._w || 240;
+                const hB = b._h || 120;
+                
+                const cAx = a.x + wA / 2;
+                const cAy = a.y + hA / 2;
+                const cBx = b.x + wB / 2;
+                const cBy = b.y + hB / 2;
+                
+                let dx = cAx - cBx;
+                let dy = cAy - cBy;
+                if (dx === 0) dx = (Math.random() - 0.5) * 1e-2;
+                if (dy === 0) dy = (Math.random() - 0.5) * 1e-2;
+                const absX = Math.abs(dx);
+                const absY = Math.abs(dy);
+                
+                const minDistanceX = (wA + wB) / 2 + padding;
+                const minDistanceY = (hA + hB) / 2 + padding;
+                
+                if (absX < minDistanceX && absY < minDistanceY) {
+                    const overlapX = minDistanceX - absX;
+                    const overlapY = minDistanceY - absY;
+                    const weightA = a.fx != null ? 0 : (b.fx != null ? 1 : 0.5);
+                    const weightB = b.fx != null ? 0 : (a.fx != null ? 1 : 0.5);
+                    if (weightA === 0 && weightB === 0) continue;
+                    
+                    if (overlapX < overlapY) {
+                        const push = overlapX * alpha;
+                        if (dx > 0) { a.x += push * weightA; b.x -= push * weightB; } 
+                        else { a.x -= push * weightA; b.x += push * weightB; }
+                    } else {
+                        const push = overlapY * alpha;
+                        if (dy > 0) { a.y += push * weightA; b.y -= push * weightB; } 
+                        else { a.y -= push * weightA; b.y += push * weightB; }
+                    }
+                }
+            }
+        }
+    }
+    force.initialize = _ => nodes = _;
+    return force;
+}
+
+// ═══════ WHITEBOARD VIEW ═══════
+const WB_COLORS = ['c-yellow', 'c-blue', 'c-pink', 'c-green', 'c-purple'];
+let wbSim = null;
+function renderWhiteboard() {
+    const canvas = dom['whiteboard-canvas'];
+    if (!canvas) return;
+
+    const filtered = filterIssues();
+    let html = '';
+    
+    const hashCode = s => Math.abs(s.split('').reduce((a,b)=>{a=((a<<5)-a)+b.charCodeAt(0);return a&a},0));
+
+    const wW = canvas.parentElement.clientWidth || window.innerWidth;
+    const wH = canvas.parentElement.clientHeight || window.innerHeight;
+    const cx = (wW / 2 - wbZoomTransform.x) / wbZoomTransform.k;
+    const cy = (wH / 2 - wbZoomTransform.y) / wbZoomTransform.k;
+
+    filtered.forEach(d => {
+        if (!d.whiteboardPos) d.whiteboardPos = { x: cx - 120 + Math.random() * 60 - 30, y: cy - 60 + Math.random() * 60 - 30 };
+        d.x = d.whiteboardPos.x;
+        d.y = d.whiteboardPos.y;
+    });
+
+    for (const i of filtered) {
+        const cIdx = hashCode(i.id) % WB_COLORS.length;
+        const colorCls = WB_COLORS[cIdx];
+        
+        html += `<div class="wb-note ${colorCls}${i.status==='done'?' is-done':''}" id="wb-n-${i.id}" data-id="${i.id}" style="transform:translate(${i.x}px, ${i.y}px)">
+            <textarea class="wb-note-input" spellcheck="false" placeholder="Empty note...">${escapeHtml(i.title)}</textarea>
+        </div>`;
+    }
+    canvas.innerHTML = html;
+
+    if (wbSim) wbSim.stop();
+    const domNodes = new Map();
+    for (const i of filtered) domNodes.set(i.id, document.getElementById(`wb-n-${i.id}`));
+
+    wbSim = d3.forceSimulation(filtered)
+        .force('rect', wbForceRect())
+        .alphaDecay(0.05)
+        .on('tick', () => {
+            for (const d of filtered) {
+                if (wbTornadoTarget && wbTornadoNodes.has(d.id)) {
+                    const tx = d._tornadoTargetX || wbTornadoTarget.x;
+                    const ty = d._tornadoTargetY || wbTornadoTarget.y;
+                    d.vx += (tx - d.x) * 0.05;
+                    d.vy += (ty - d.y) * 0.05;
+                }
+                d.whiteboardPos.x = d.x;
+                d.whiteboardPos.y = d.y;
+                const el = domNodes.get(d.id);
+                if (el) {
+                    el.style.transform = `translate(${d.x}px, ${d.y}px)`;
+                    if (!d._w || Math.random() < 0.05) {
+                        d._w = el.offsetWidth;
+                        d._h = el.offsetHeight;
+                    }
+                }
+            }
+        })
+        .on('end', () => {
+            localStorage.setItem('bubbleTaskerIssues', JSON.stringify(issues));
+        });
+
+    let resizeAttempts = 0;
+    const resizeInterval = setInterval(() => {
+        let anyResized = false;
+        document.querySelectorAll('.wb-note-input').forEach(ta => {
+            const oldW = ta.closest('.wb-note').style.width;
+            const oldH = ta.style.height;
+            resizeNote(ta);
+            if (oldW !== ta.closest('.wb-note').style.width || oldH !== ta.style.height) {
+                anyResized = true;
+            }
+        });
+        if (anyResized && wbSim) wbSim.alphaTarget(0.3).restart();
+        
+        resizeAttempts++;
+        if (resizeAttempts > 5) clearInterval(resizeInterval);
+    }, 150);
+}
+
+// Whiteboard Interactions
+let wbDrag = null;
+let wbTornadoTarget = null;
+let wbTornadoNodes = new Set();
+let wbMaxZ = 10;
+let wbZoomTransform = d3.zoomIdentity;
+
+function renderTrashPanel() {
+    const list = document.getElementById('trash-list');
+    const btn = document.getElementById('empty-trash-btn');
+    if (!deletedStack.length) {
+        list.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-2);font-size:13px">Trash is empty</div>';
+        btn.disabled = true;
+        return;
+    }
+    btn.disabled = false;
+    list.innerHTML = deletedStack.slice().reverse().map((i, idx) => `
+        <div class="trash-item">
+            <span class="trash-item-title" title="${escapeHtml(i.title)}">#${i.num} ${escapeHtml(i.title||'Empty note')}</span>
+            <button class="trash-restore-btn" data-idx="${deletedStack.length - 1 - idx}">Restore</button>
+        </div>
+    `).join('');
+    list.querySelectorAll('.trash-restore-btn').forEach(b => {
+        b.addEventListener('click', e => {
+            const idx = parseInt(e.target.dataset.idx);
+            const issue = deletedStack.splice(idx, 1)[0];
+            issues.push(issue);
+            persist();
+            renderTrashPanel();
+            toast('↩ Restored', 'ok');
+        });
+    });
+}
+
+setTimeout(() => {
+    const wc = dom['whiteboard-canvas'];
+    const wv = dom['whiteboard-view'];
+    if(!wc || !wv) return;
+    
+    window._wbZoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', e => {
+        wbZoomTransform = e.transform;
+        wc.style.transform = `translate(${e.transform.x}px, ${e.transform.y}px) scale(${e.transform.k})`;
+        wv.style.backgroundPosition = `${e.transform.x}px ${e.transform.y}px`;
+        wv.style.backgroundSize = `${24 * e.transform.k}px ${24 * e.transform.k}px`;
+        const p = Math.round(e.transform.k * 100);
+        if (dom['zoom-level'] && currentView === 'whiteboard') dom['zoom-level'].textContent = p + '%';
+    });
+    d3.select(wv).call(window._wbZoom).on('dblclick.zoom', null);
+
+    const trashBin = document.getElementById('wb-trash');
+    const trashPanel = document.getElementById('trash-panel');
+    if (trashBin) {
+        trashBin.addEventListener('click', () => {
+            trashPanel.classList.toggle('hidden');
+            if (!trashPanel.classList.contains('hidden')) renderTrashPanel();
+        });
+        document.getElementById('close-trash-btn').addEventListener('click', () => trashPanel.classList.add('hidden'));
+        document.getElementById('empty-trash-btn').addEventListener('click', () => {
+            if (confirm('Empty trash permanently?')) {
+                deletedStack = [];
+                renderTrashPanel();
+            }
+        });
+    }
+
+    let wbLasso = null;
+    let wbSelected = new Set();
+    const lassoEl = document.getElementById('wb-lasso');
+
+    wv.addEventListener('mousedown', e => {
+        const isCtrl = e.ctrlKey || e.metaKey;
+        const note = e.target.closest('.wb-note');
+        
+        if (!note) {
+            if (isCtrl) {
+                e.stopImmediatePropagation();
+                e.preventDefault(); // disable panning
+                const rect = wv.getBoundingClientRect();
+                wbLasso = { startX: e.clientX, startY: e.clientY, rect };
+                if (lassoEl) {
+                    lassoEl.style.left = (e.clientX - rect.left) + 'px';
+                    lassoEl.style.top = (e.clientY - rect.top) + 'px';
+                    lassoEl.style.width = '0px';
+                    lassoEl.style.height = '0px';
+                    lassoEl.classList.remove('hidden');
+                }
+            } else {
+                wbSelected.clear();
+                document.querySelectorAll('.wb-note.is-selected').forEach(n => n.classList.remove('is-selected'));
+            }
+            return;
+        }
+        
+        e.stopImmediatePropagation();
+        const id = note.dataset.id;
+        const issue = _filterCache.find(i => i.id === id);
+        if (!issue) return;
+
+        if (isCtrl) {
+            if (wbSelected.has(id)) {
+                wbSelected.delete(id);
+                note.classList.remove('is-selected');
+            } else {
+                wbSelected.add(id);
+                note.classList.add('is-selected');
+            }
+            return;
+        }
+
+        if (!wbSelected.has(id)) {
+            wbSelected.clear();
+            document.querySelectorAll('.wb-note.is-selected').forEach(n => n.classList.remove('is-selected'));
+            wbSelected.add(id);
+            note.classList.add('is-selected');
+        }
+        
+        wbMaxZ++;
+        note.style.zIndex = wbMaxZ;
+        
+        if (note.classList.contains('is-editing')) return;
+        if (e.target.closest('.done-btn')) return;
+        
+        if (wbSim) wbSim.alphaTarget(0.3).restart();
+        
+        const dragGroup = [];
+        for (const selId of wbSelected) {
+            const selIss = _filterCache.find(i => i.id === selId);
+            const selEl = document.getElementById('wb-n-' + selId);
+            if (selIss && selEl) {
+                selIss.fx = selIss.x;
+                selIss.fy = selIss.y;
+                selEl.classList.add('dragging');
+                dragGroup.push({ el: selEl, issue: selIss, initX: selIss.x, initY: selIss.y });
+            }
+        }
+        wbDrag = { group: dragGroup, startX: e.clientX, startY: e.clientY };
+    }, true);
+
+    let wbCtxPos = { x: 0, y: 0 };
+    wv.addEventListener('contextmenu', e => {
+        const note = e.target.closest('.wb-note');
+        if (note) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (wbEmptyCtxEl) wbEmptyCtxEl.classList.remove('visible');
+            showCtx(e, note.dataset.id);
+        } else {
+            e.preventDefault();
+            e.stopPropagation();
+            hideCtx();
+            
+            const rect = wv.getBoundingClientRect();
+            wbCtxPos.x = (e.clientX - rect.left - wbZoomTransform.x) / wbZoomTransform.k;
+            wbCtxPos.y = (e.clientY - rect.top - wbZoomTransform.y) / wbZoomTransform.k;
+            
+            if (wbEmptyCtxEl) {
+                wbEmptyCtxEl.classList.add('visible');
+                let l = e.pageX; let t = e.pageY;
+                if (l + wbEmptyCtxEl.offsetWidth > window.innerWidth) l = window.innerWidth - wbEmptyCtxEl.offsetWidth - 8;
+                if (t + wbEmptyCtxEl.offsetHeight > window.innerHeight) t = window.innerHeight - wbEmptyCtxEl.offsetHeight - 8;
+                wbEmptyCtxEl.style.left = l + 'px';
+                wbEmptyCtxEl.style.top = t + 'px';
+            }
+        }
+    });
+
+    if (wbEmptyCtxEl) {
+        wbEmptyCtxEl.addEventListener('click', e => {
+            const item = e.target.closest('.ctx-item');
+            if (!item) return;
+            const action = item.dataset.action;
+            if (!action.startsWith('wb-tornado') || !item.classList.contains('ctx-has-sub')) {
+                wbEmptyCtxEl.classList.remove('visible');
+            }
+            
+            if (action && action.startsWith('wb-tornado')) {
+                const type = action.replace('wb-tornado-', '');
+                wbTornadoNodes.clear();
+                for (const d of _filterCache) {
+                    if (!d.whiteboardPos) continue;
+                    if (type === 'active' && d.status === 'done') continue;
+                    if (type === 'done' && d.status !== 'done') continue;
+                    
+                    d._tornadoTargetX = wbCtxPos.x + (Math.random() * 200 - 100);
+                    d._tornadoTargetY = wbCtxPos.y + (Math.random() * 200 - 100);
+                    wbTornadoNodes.add(d.id);
+                }
+                
+                if (wbTornadoNodes.size > 0) {
+                    wbTornadoTarget = { x: wbCtxPos.x, y: wbCtxPos.y };
+                    if (wbSim) wbSim.alpha(1).restart();
+                    
+                    setTimeout(() => {
+                        wbTornadoTarget = null;
+                        wbTornadoNodes.clear();
+                        if (wbSim) wbSim.alphaTarget(0);
+                        persist();
+                    }, 1500);
+                }
+                if (!item.classList.contains('ctx-has-sub')) wbEmptyCtxEl.classList.remove('visible');
+                return;
+            }
+            
+            if (action === 'wb-new-note') {
+                const i = { id:Date.now().toString(), num:_nextNum++, title:'', description:'', status:'open', priority:'medium', category:'Task', tags:[], assignee:'Unassigned', date:new Date().toISOString(), subtasks:[], dependencies:[], starred:false, history:[{action:'Created',detail:'on whiteboard',at:new Date().toISOString()}] };
+                i.whiteboardPos = { x: wbCtxPos.x, y: wbCtxPos.y };
+                issues.push(i);
+                persist();
+                setTimeout(() => {
+                    const el = document.querySelector(`.wb-note[data-id="${i.id}"]`);
+                    if (el) el.dispatchEvent(new MouseEvent('dblclick', {bubbles:true}));
+                }, 50);
+            } else if (action === 'wb-zoom-fit') {
+                document.getElementById('zoom-fit-btn')?.click();
+            } else if (action === 'wb-empty-trash') {
+                document.getElementById('empty-trash-btn')?.click();
+            }
+        });
+    }
+
+    document.addEventListener('mousemove', e => {
+        if (wbLasso && lassoEl) {
+            const left = Math.min(e.clientX, wbLasso.startX) - wbLasso.rect.left;
+            const top = Math.min(e.clientY, wbLasso.startY) - wbLasso.rect.top;
+            const width = Math.abs(e.clientX - wbLasso.startX);
+            const height = Math.abs(e.clientY - wbLasso.startY);
+            lassoEl.style.left = left + 'px';
+            lassoEl.style.top = top + 'px';
+            lassoEl.style.width = width + 'px';
+            lassoEl.style.height = height + 'px';
+            
+            const lRect = lassoEl.getBoundingClientRect();
+            document.querySelectorAll('.wb-note').forEach(note => {
+                const nRect = note.getBoundingClientRect();
+                const intersect = !(nRect.right < lRect.left || nRect.left > lRect.right || nRect.bottom < lRect.top || nRect.top > lRect.bottom);
+                const id = note.dataset.id;
+                if (intersect) {
+                    wbSelected.add(id);
+                    note.classList.add('is-selected');
+                } else {
+                    wbSelected.delete(id);
+                    note.classList.remove('is-selected');
+                }
+            });
+            return;
+        }
+
+        if (!wbDrag) return;
+        const dx = (e.clientX - wbDrag.startX) / wbZoomTransform.k;
+        const dy = (e.clientY - wbDrag.startY) / wbZoomTransform.k;
+        
+        for (const item of wbDrag.group) {
+            item.issue.fx = item.initX + dx;
+            item.issue.fy = item.initY + dy;
+        }
+        
+        if (trashBin && trashPanel.classList.contains('hidden')) {
+            const rect = trashBin.getBoundingClientRect();
+            if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                trashBin.classList.add('drag-over');
+            } else {
+                trashBin.classList.remove('drag-over');
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', e => {
+        if (wbLasso) {
+            wbLasso = null;
+            if (lassoEl) lassoEl.classList.add('hidden');
+        }
+
+        if (!wbDrag) return;
+        
+        if (trashBin && trashBin.classList.contains('drag-over')) {
+            trashBin.classList.remove('drag-over');
+            for (const item of wbDrag.group) {
+                deletedStack.push(structuredClone(item.issue));
+                issues = issues.filter(i => i.id !== item.issue.id);
+            }
+            wbDrag = null;
+            wbSelected.clear();
+            persist();
+            toast('🗑️ Deleted', 'bad', true);
+            return;
+        }
+
+        const dx = Math.abs(e.clientX - wbDrag.startX);
+        const dy = Math.abs(e.clientY - wbDrag.startY);
+        const wasDrag = dx > 3 || dy > 3;
+
+        for (const item of wbDrag.group) {
+            item.issue.fx = null;
+            item.issue.fy = null;
+            item.el.classList.remove('dragging');
+        }
+        
+        if (!wasDrag && wbSelected.size > 1 && wbDrag.group.length > 0 && e.target) {
+            const noteEl = e.target.closest('.wb-note');
+            if (noteEl) {
+                const id = noteEl.dataset.id;
+                if (wbSelected.has(id)) {
+                    wbSelected.clear();
+                    document.querySelectorAll('.wb-note.is-selected').forEach(n => n.classList.remove('is-selected'));
+                    wbSelected.add(id);
+                    noteEl.classList.add('is-selected');
+                }
+            }
+        }
+        
+        if (wbSim) wbSim.alphaTarget(0);
+        wbDrag = null;
+    });
+
+    wv.addEventListener('dblclick', e => {
+        const note = e.target.closest('.wb-note');
+        if (note) {
+            note.classList.add('is-editing');
+            const input = note.querySelector('.wb-note-input');
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+            return;
+        }
+        
+        const rect = wv.getBoundingClientRect();
+        const x_screen = e.clientX - rect.left;
+        const y_screen = e.clientY - rect.top;
+        const x = (x_screen - wbZoomTransform.x) / wbZoomTransform.k - 120;
+        const y = (y_screen - wbZoomTransform.y) / wbZoomTransform.k - 40;
+        
+        const id = Date.now().toString(), num = _nextNum++;
+        const now = new Date().toISOString();
+        const issue = { id, num, title:'', description:'', status:'open', priority:'medium', category:'Task', tags:[], assignee:'Unassigned', date:now, dueDate:null, subtasks:[], dependencies:[], recurrence:'none', timeEntries:[], snoozedUntil:null, whiteboardPos:{x,y}, starred:false, history:[{action:'Created',detail:'Whiteboard',at:now}], statusChangedAt:now };
+        issues.push(issue);
+        persist();
+        
+        setTimeout(() => {
+            const newNote = document.querySelector(`.wb-note[data-id="${id}"]`);
+            if (newNote) {
+                newNote.classList.add('is-editing');
+                const input = newNote.querySelector('.wb-note-input');
+                if (input) input.focus();
+            }
+        }, 50);
+    });
+
+    wc.addEventListener('focusout', e => {
+        if (e.target.classList.contains('wb-note-input')) {
+            e.target.closest('.wb-note').classList.remove('is-editing');
+        }
+    });
+
+// Helper to resize note proportionally
+function resizeNote(ta) {
+    const noteEl = ta.closest('.wb-note');
+    noteEl.style.width = '240px';
+    ta.style.height = 'auto';
+    let sh = ta.scrollHeight;
+    
+    if (sh > 120) {
+        let targetWidth = Math.sqrt(120 * sh) * 2;
+        if (targetWidth < 240) targetWidth = 240;
+        noteEl.style.width = targetWidth + 'px';
+    }
+    
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+}
+
+    wc.addEventListener('input', e => {
+        if (e.target.classList.contains('wb-note-input')) {
+            const ta = e.target;
+            resizeNote(ta);
+            if (wbSim) wbSim.alphaTarget(0.1).restart();
+            
+            const id = ta.closest('.wb-note').dataset.id;
+            const issue = issues.find(i => i.id === id);
+            if (issue) {
+                issue.title = ta.value;
+                clearTimeout(window._wbSave);
+                window._wbSave = setTimeout(() => {
+                    localStorage.setItem('bubbleTaskerIssues', JSON.stringify(issues));
+                    rebuildMap();
+                }, 500);
+            }
+        }
+    });
+
+    wc.addEventListener('click', e => {
+        const btn = e.target.closest('.done-btn');
+        if (btn) {
+            const id = btn.closest('.wb-note').dataset.id;
+            const issue = issues.find(i => i.id === id);
+            if (issue) {
+                issue.status = issue.status === 'done' ? 'open' : 'done';
+                issue.statusChangedAt = new Date().toISOString();
+                persist();
+                if (settings.confettiOn && issue.status === 'done') fireConfetti();
+                if (settings.soundOn && issue.status === 'done') playSound(600, 'sine', 0.1);
+            }
+        }
+    });
+}, 500);
 
 // ═══════ PHYSICS ═══════
 function dragS(e,d){tip.style('opacity',0);if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y}
@@ -882,14 +1453,14 @@ function onOver(e,d) {
     const linked=new Set([d.id]);if(d.dependencies)for(const id of d.dependencies)linked.add(id);const rev=reverseDeps.get(d.id);if(rev)for(const id of rev)linked.add(id);
     nodeLayer.selectAll('.card').style('opacity',b=>linked.has(b.id)?1:.15);
     linkLayer.selectAll('.dep-link').style('opacity',l=>(l.source===d.id||l.target===d.id)?.8:.05);
-    const parts=[`<h4>#${d.num} ${d.title}</h4>`];
-    const desc=(d.description||'').trim();if(desc)parts.push(`<div class="tt-desc">${desc.replace(/\n/g,' ').slice(0,140)}${desc.length>140?'…':''}</div>`);
+    const parts=[`<h4>#${d.num} ${escapeHtml(d.title)}</h4>`];
+    const desc=(d.description||'').trim();if(desc)parts.push(`<div class="tt-desc">${escapeHtml(desc.replace(/\n/g,' ').slice(0,140))}${desc.length>140?'…':''}</div>`);
     parts.push(`<div class="tt-meta"><span>Status</span><strong style="color:${COLOR[d.status]}">${STATUS_LABEL[d.status]}</strong></div>`);
     parts.push(`<div class="tt-meta"><span>Priority</span><strong style="text-transform:capitalize">${d.priority}</strong></div>`);
-    parts.push(`<div class="tt-meta"><span>Assignee</span><strong>${d.assignee||'—'}</strong></div>`);
+    parts.push(`<div class="tt-meta"><span>Assignee</span><strong>${escapeHtml(d.assignee||'—')}</strong></div>`);
     if(d.subtasks?.length)parts.push(`<div class="tt-extra">☑ ${d.subtasks.filter(s=>s.done).length}/${d.subtasks.length} sub-tasks</div>`);
     if(d.dueDate){const sd=smartDue(d.dueDate);parts.push(`<div class="tt-extra" style="color:${sd.cls==='overdue'?'var(--red)':sd.cls==='today'?'var(--amber)':'var(--text-3)'}">${sd.text} (${d.dueDate})</div>`)}
-    if(d.tags.length)parts.push(`<div class="tt-tags">${d.tags.map(t=>`<span class="tt-tag">${t}</span>`).join('')}</div>`);
+    if(d.tags.length)parts.push(`<div class="tt-tags">${d.tags.map(t=>`<span class="tt-tag">${escapeHtml(t)}</span>`).join('')}</div>`);
     if(d.starred)parts.push(`<div class="tt-extra">⭐ Starred</div>`);
     tip.html(parts.join(''));tip.style('opacity',1);const{tx,ty}=tipPos(e);tip.style('left',tx+'px').style('top',ty+'px');
 }
@@ -935,7 +1506,15 @@ function forceContain(centers, field) {
 function updateLabels(c) { labelLayer.selectAll('.group-label-svg').remove();if(groupBy==='none')return;for(const[n,p]of Object.entries(c)){labelLayer.append('text').attr('class','group-label-svg').attr('x',p.x).attr('y',p.y).attr('text-anchor','middle').attr('dominant-baseline','middle').text(n.replace('_',' ').toUpperCase())} }
 
 // ═══════ CONTEXT MENU ═══════
-function showCtx(e,id){ctxId=id;ctxEl.style.left=e.pageX+'px';ctxEl.style.top=e.pageY+'px';ctxEl.classList.add('visible')}
+function showCtx(e,id){
+    ctxId=id;
+    ctxEl.classList.add('visible');
+    let l = e.pageX; let t = e.pageY;
+    if (l + ctxEl.offsetWidth > window.innerWidth) l = window.innerWidth - ctxEl.offsetWidth - 8;
+    if (t + ctxEl.offsetHeight > window.innerHeight) t = window.innerHeight - ctxEl.offsetHeight - 8;
+    ctxEl.style.left = l + 'px';
+    ctxEl.style.top = t + 'px';
+}
 function hideCtx(){ctxEl.classList.remove('visible');ctxId=null}
 function doCtx(action) {
     if(!ctxId)return;const issue=getI(ctxId);if(!issue)return;
@@ -1633,6 +2212,7 @@ function wire() {
             date: now,
             dueDate: explicitDue || parsed.dueDate || null,
             subtasks: [], dependencies: [],
+            recurrence: 'none', timeEntries: [], snoozedUntil: null,
             starred: parsed.starred,
             history: [{ action:'Created', detail:'', at: now }],
             statusChangedAt: now
@@ -1657,6 +2237,8 @@ function wire() {
     $('prev-issue-btn').addEventListener('click',()=>navIssue(-1));
     $('next-issue-btn').addEventListener('click',()=>navIssue(1));
     $('zoom-fit-btn').addEventListener('click',zoomToFit);
+    $('zoom-in-btn').addEventListener('click',()=>zoomBy(1.5));
+    $('zoom-out-btn').addEventListener('click',()=>zoomBy(0.66));
 
     let _tT=null;
     dom['panel-title'].addEventListener('input',function(){autoExpand(this);clearTimeout(_tT);_tT=setTimeout(()=>{const i=getI(selId);if(i){i.title=this.value.trim()||'Untitled';persist()}},400)});
@@ -1678,7 +2260,10 @@ function wire() {
 
     // Context menu
     ctxEl.addEventListener('click',e=>{const item=e.target.closest('.ctx-item');if(item)doCtx(item.dataset.action)});
-    document.addEventListener('click',e=>{if(!ctxEl.contains(e.target))hideCtx()});
+    document.addEventListener('click',e=>{
+        if(!ctxEl.contains(e.target))hideCtx();
+        if(wbEmptyCtxEl && !wbEmptyCtxEl.contains(e.target)) wbEmptyCtxEl.classList.remove('visible');
+    });
 
     // Sidebar actions
     dom['compact-toggle'].addEventListener('change',e=>{isCompact=e.target.checked;renderGraph()});
